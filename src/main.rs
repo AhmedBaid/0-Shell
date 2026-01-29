@@ -4,23 +4,30 @@ use std::path::Path;
 
 fn list_directory(path: &Path, show_all: bool, classify: bool) -> io::Result<Vec<String>> {
     let mut entries = Vec::new();
+
     for entry in path.read_dir()? {
         let entry = entry?;
-        let name = match entry.file_name().to_str() {
+
+        let file_name = entry.file_name();
+        let name = match file_name.to_str() {
             Some(name) => name,
             None => continue,
         };
+
         if !show_all && name.starts_with('.') {
             continue;
         }
+
         let mut display_name = name.to_string();
         if classify {
             if entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
                 display_name.push('/');
             }
         }
+
         entries.push(display_name);
     }
+
     entries.sort();
     Ok(entries)
 }
