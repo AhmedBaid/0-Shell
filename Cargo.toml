@@ -1,0 +1,10 @@
+[package]
+name = "zero_shell"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "0-shell"
+path = "src/main.rs"
+
+[dependencies]
