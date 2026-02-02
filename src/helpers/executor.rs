@@ -1,3 +1,5 @@
+use crate::command_cd;
+
 use super::parser::*;
 use std::env;
 
@@ -15,10 +17,8 @@ pub fn execute(cmd: Command) -> bool {
             }
         }
 
-        Command::Cd(path) => {
-            if let Err(e) = env::set_current_dir(&path) {
-                println!("cd: {}", e);
-            }
+        Command::Cd(path) =>{
+            command_cd(path);
         }
 
         Command::Echo(args) => {
@@ -30,7 +30,6 @@ pub fn execute(cmd: Command) -> bool {
         Command::Unknown(cmd) => {
             println!("command not found: {}", cmd);
         }
-
     }
     true
 }

@@ -1,8 +1,10 @@
 use std::env;
 use std::io;
-mod helpers;
-use helpers::print_banner::*;
+pub mod commands;
+pub mod helpers;
+use commands::cd::*;
 use helpers::parser::*;
+use helpers::print_banner::*;
 
 const CYAN: &str = "\x1b[36m";
 const RESET: &str = "\x1b[0m";
