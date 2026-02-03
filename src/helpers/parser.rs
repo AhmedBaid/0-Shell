@@ -1,6 +1,7 @@
+use std::process::Command;
 use super::executor::*;
 #[derive(Debug)]
-pub enum Command {
+pub enum CommandEnum {
     Pwd,
     Cd(String),
     Echo(Vec<String>),
@@ -9,7 +10,7 @@ pub enum Command {
     Unknown(String),
 }
 
-pub fn parse_input(input: &str) -> Vec<Command> {
+pub fn parse_input(input: &str) -> Vec<CommandEnum> {
     let trimmed = input.trim();
     if trimmed.is_empty() {
         return vec![];
@@ -33,12 +34,16 @@ pub fn parse_input(input: &str) -> Vec<Command> {
         let args = &parts[1..];
 
         let parsed = match cmd {
-            "pwd" => Command::Pwd,
-            "cd" => Command::Cd(args.get(0).unwrap_or(&"/").to_string()),
-            "echo" => Command::Echo(args.iter().map(|s| s.to_string()).collect()),
-            "mkdir" => Command::Mkdir(args.get(0).unwrap_or(&"").to_string()),
-            "exit" => Command::Exit,
-            _ => Command::Unknown(cmd.to_string()),
+            "pwd" => CommandEnum::Pwd,
+            "cd" => CommandEnum::Cd(args.get(0).unwrap_or(&"/").to_string()),
+            "echo" => CommandEnum::Echo(args.iter().map(|s| s.to_string()).collect()),
+            "mkdir" => CommandEnum::Mkdir(args.get(0).unwrap_or(&"").to_string()),
+            "exit" => CommandEnum::Exit,
+            "clear" => {
+                execute_clear();
+                continue;
+            }
+            _ => CommandEnum::Unknown(cmd.to_string()),
         };
 
         cmds.push(parsed);
@@ -46,7 +51,7 @@ pub fn parse_input(input: &str) -> Vec<Command> {
 
     cmds
 }
-pub fn execute_all(cmds: Vec<Command>) -> bool {
+pub fn execute_all(cmds: Vec<CommandEnum>) -> bool {
     for cmd in cmds {
         let keep_running = execute(cmd);
         if !keep_running {
@@ -54,4 +59,9 @@ pub fn execute_all(cmds: Vec<Command>) -> bool {
         }
     }
     true
+}
+pub fn execute_clear(){
+    Command::new("clear")
+        .status()
+        .expect("Failed to execute clear command");
 }
