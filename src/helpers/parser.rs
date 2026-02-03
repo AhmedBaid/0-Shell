@@ -2,6 +2,7 @@ use std::process::Command;
 use super::executor::*;
 #[derive(Debug)]
 pub enum CommandEnum {
+    Cp(Vec<String>),
     Pwd,
     Cd(String),
     Echo(Vec<String>),
@@ -32,7 +33,7 @@ pub fn parse_input(input: &str) -> Vec<CommandEnum> {
 
         let cmd = parts[0];
         let args = &parts[1..];
-
+        println!("{cmd}-- {args:?}");
         let parsed = match cmd {
             "pwd" => CommandEnum::Pwd,
             "cd" => CommandEnum::Cd(args.get(0).unwrap_or(&"/").to_string()),
@@ -44,6 +45,16 @@ pub fn parse_input(input: &str) -> Vec<CommandEnum> {
                 continue;
             }
             _ => CommandEnum::Unknown(cmd.to_string()),
+            "cp" =>
+                Command::Cp(
+                    args
+                        .iter()
+                        .map(|r| r.to_string())
+                        .collect()
+                ),
+            "cd" => Command::Cd(args.get(0).unwrap_or(&"/").to_string()),
+            "exit" => Command::Exit,
+            _ => Command::Unknown(cmd.to_string()),
         };
 
         cmds.push(parsed);
