@@ -1,6 +1,7 @@
 use super::executor::*;
 #[derive(Debug)]
 pub enum Command {
+    Cp(Vec<String>),
     Pwd,
     Cd(String),
     Echo(Vec<String>),
@@ -31,11 +32,24 @@ pub fn parse_input(input: &str) -> Vec<Command> {
 
         let cmd = parts[0];
         let args = &parts[1..];
-
+        println!("{cmd}-- {args:?}");
         let parsed = match cmd {
+            "cp" =>
+                Command::Cp(
+                    args
+                        .iter()
+                        .map(|r| r.to_string())
+                        .collect()
+                ),
             "pwd" => Command::Pwd,
             "cd" => Command::Cd(args.get(0).unwrap_or(&"/").to_string()),
-            "echo" => Command::Echo(args.iter().map(|s| s.to_string()).collect()),
+            "echo" =>
+                Command::Echo(
+                    args
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect()
+                ),
             "mkdir" => Command::Mkdir(args.get(0).unwrap_or(&"").to_string()),
             "exit" => Command::Exit,
             _ => Command::Unknown(cmd.to_string()),

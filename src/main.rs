@@ -1,4 +1,5 @@
 use std::env;
+use std::io::Write;
 use std::io;
 pub mod commands;
 pub mod helpers;
@@ -12,13 +13,12 @@ fn main() {
     print_banner();
 
     loop {
-        let mut prompt = String::new();
+        let mut prompt: String = String::new();
 
         let current_dir = env::current_dir().expect("Failed to get current working directory");
         let user = env::var("USER").unwrap_or("unknown".to_string());
-        print!("{CYAN}{}:{}$ {RESET}", user, current_dir.display());
+        print!("{CYAN}{}$ {RESET}", current_dir.display());
 
-        use std::io::Write;
         io::stdout().flush().unwrap();
 
         match io::stdin().read_line(&mut prompt) {
