@@ -1,18 +1,17 @@
 use std::env;
-use std::io::{self, Write}; // Added Write for flush()
+use std::io::{self, Write};
 pub mod commands;
 pub mod helpers;
 use commands::cd::*;
 use helpers::parser::*;
 use helpers::print_banner::*;
 
-// For handling key events
 use crossterm::cursor::MoveToColumn;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::execute;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
 
-const CYAN: &str = "\x1b[36m";
+const GREEN: &str = "\x1b[32m";
 const RESET: &str = "\x1b[0m";
 
 fn main() -> io::Result<()> {
@@ -31,7 +30,7 @@ fn main() -> io::Result<()> {
 
     loop {
         let current_dir = env::current_dir().expect("Failed to get current working directory");
-        let prompt_text = format!("{CYAN}{}$ {RESET}", current_dir.display());
+        let prompt_text = format!("{GREEN}{}$ {RESET}", current_dir.display());
 
         print!("{}", prompt_text);
         io::stdout().flush()?;
