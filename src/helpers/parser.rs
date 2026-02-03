@@ -35,6 +35,13 @@ pub fn parse_input(input: &str) -> Vec<CommandEnum> {
         let args = &parts[1..];
         println!("{cmd}-- {args:?}");
         let parsed = match cmd {
+            "cp" =>
+                CommandEnum::Cp(
+                    args
+                        .iter()
+                        .map(|r| r.to_string())
+                        .collect()
+                ),
             "pwd" => CommandEnum::Pwd,
             "cd" => CommandEnum::Cd(args.get(0).unwrap_or(&"/").to_string()),
             "echo" => CommandEnum::Echo(args.iter().map(|s| s.to_string()).collect()),
@@ -45,16 +52,6 @@ pub fn parse_input(input: &str) -> Vec<CommandEnum> {
                 continue;
             }
             _ => CommandEnum::Unknown(cmd.to_string()),
-            "cp" =>
-                Command::Cp(
-                    args
-                        .iter()
-                        .map(|r| r.to_string())
-                        .collect()
-                ),
-            "cd" => Command::Cd(args.get(0).unwrap_or(&"/").to_string()),
-            "exit" => Command::Exit,
-            _ => Command::Unknown(cmd.to_string()),
         };
 
         cmds.push(parsed);

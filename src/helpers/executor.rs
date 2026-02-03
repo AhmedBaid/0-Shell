@@ -5,12 +5,12 @@ use std::env;
 
 pub fn execute(cmd: CommandEnum) -> bool {
     match cmd {
-        Command::Cp(c) => if c.len() != 2 {
+        CommandEnum::Cp(c) => if c.len() != 2 {
             println!("cp: missing file operand");
         } else {
             Cp(c);
         }
-        Command::Pwd => {
+        CommandEnum::Pwd => {
             if let Ok(dir) = env::current_dir() {
                 println!("{}", dir.display());
             }
@@ -22,7 +22,7 @@ pub fn execute(cmd: CommandEnum) -> bool {
             }
         }
 
-        Command::Cd(path) => {
+        CommandEnum::Cd(path) => {
             command_cd(path);
         }
 
@@ -30,7 +30,7 @@ pub fn execute(cmd: CommandEnum) -> bool {
             println!("{}", args.join(" "));
         }
 
-        Command::Exit => {
+        CommandEnum::Exit => {
             return false;
         }
 
