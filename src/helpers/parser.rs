@@ -33,7 +33,6 @@ pub fn parse_input(input: &str) -> Vec<CommandEnum> {
 
         let cmd = parts[0];
         let args = &parts[1..];
-        println!("{cmd}-- {args:?}");
         let parsed = match cmd {
             "cp" =>
                 CommandEnum::Cp(

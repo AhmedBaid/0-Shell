@@ -1,5 +1,5 @@
-use std::{ env::{ self, Args }, fs, io::ErrorKind, path::{ self, Path } };
-pub fn Cp(args: Vec<String>) {
+use std::{fs, io::ErrorKind, path::Path};
+pub fn cp(args: Vec<String>) {
     let source_path = Path::new(&args[0]);
     let destination_path = Path::new(&args[1]);
     if !source_path.is_file() {
@@ -21,7 +21,7 @@ pub fn Cp(args: Vec<String>) {
             }
         }
     } else {
-         let res = fs::copy(source_path, destination_path);
+        let res = fs::copy(source_path, destination_path);
         match res {
             Ok(_) => {}
             Err(e) => {
