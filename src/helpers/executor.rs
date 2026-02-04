@@ -1,14 +1,16 @@
-use crate::{ command_cd, commands::cp::* };
+use crate::{command_cd, commands::cp::*, commands::echo::*};
 
 use super::parser::*;
 use std::env;
 
 pub fn execute(cmd: CommandEnum) -> bool {
     match cmd {
-        CommandEnum::Cp(c) => if c.len() != 2 {
-            println!("cp: missing file operand");
-        } else {
-            cp(c);
+        CommandEnum::Cp(c) => {
+            if c.len() != 2 {
+                println!("cp: missing file operand");
+            } else {
+                cp(c);
+            }
         }
         CommandEnum::Pwd => {
             if let Ok(dir) = env::current_dir() {
@@ -27,7 +29,7 @@ pub fn execute(cmd: CommandEnum) -> bool {
         }
 
         CommandEnum::Echo(args) => {
-            println!("{}", args.join(" "));
+            echo(args);
         }
 
         CommandEnum::Exit => {
