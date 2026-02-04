@@ -1,10 +1,14 @@
-use crate::{command_cd, commands::cp::*, commands::echo::*};
+use crate::{
+    command_cd,
+    commands::{cat::cat, cp::*, echo::*},
+};
 
 use super::parser::*;
 use std::env;
 
 pub fn execute(cmd: CommandEnum) -> bool {
     match cmd {
+        CommandEnum::Cat(c) => cat(c),
         CommandEnum::Cp(c) => {
             if c.len() != 2 {
                 println!("cp: missing file operand");
