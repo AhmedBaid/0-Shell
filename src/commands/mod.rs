@@ -4,6 +4,5 @@ pub mod cp;
 pub mod ls;
 pub mod rm;
 pub mod touch;
-pub mod help;
 pub mod mv;
 pub mod echo;
