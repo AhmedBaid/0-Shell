@@ -4,7 +4,7 @@ use std::process::Command;
 pub enum CommandEnum {
     Cp(Vec<String>),
     Pwd,
-    Cd(String),
+    Cd(Vec<String>),
     Echo(Vec<String>),
     Mkdir(String),
     Exit,
@@ -39,7 +39,7 @@ pub fn parse_input(input: &str) -> Vec<CommandEnum> {
             "cat"=>CommandEnum::Cat(args.iter().map(|r| r.to_string()).collect()), 
             "cp" => CommandEnum::Cp(args.iter().map(|r| r.to_string()).collect()),
             "pwd" => CommandEnum::Pwd,
-            "cd" => CommandEnum::Cd(args.get(0).unwrap_or(&"/").to_string()),
+            "cd" => CommandEnum::Cd(args.to_vec().iter().map(|s| s.to_string()).collect()),
             "echo" => CommandEnum::Echo(args.iter().map(|s| s.to_string()).collect()),
             "mkdir" => CommandEnum::Mkdir(args.get(0).unwrap_or(&"").to_string()),
             "exit" => CommandEnum::Exit,
