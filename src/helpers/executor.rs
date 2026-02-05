@@ -1,13 +1,17 @@
-use crate::{
-    command_cd,
-    commands::{cat::cat, cp::*, echo::*},
-};
+use crate::{ command_cd, commands::{ cat::cat, cp::*, echo::*, rm::rm } };
 
 use super::parser::*;
 use std::env;
 
 pub fn execute(cmd: CommandEnum) -> bool {
     match cmd {
+        CommandEnum::Rm(c) => {
+            if c.is_empty() {
+                println!("rm: missing operand");
+            } else {
+                rm(c);
+            }
+        }
         CommandEnum::Cat(c) => cat(c),
         CommandEnum::Cp(c) => {
             if c.len() != 2 {
