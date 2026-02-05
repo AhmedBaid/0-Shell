@@ -18,14 +18,6 @@ fn main() -> io::Result<()> {
     print_banner();
     enable_raw_mode()?;
 
-    struct RawModeGuard;
-    impl Drop for RawModeGuard {
-        fn drop(&mut self) {
-            let _ = disable_raw_mode();
-        }
-    }
-    let _guard = RawModeGuard;
-
     let mut history: Vec<String> = vec![];
 
     loop {
@@ -43,10 +35,16 @@ fn main() -> io::Result<()> {
                 if key_event.kind == KeyEventKind::Press {
                     match key_event.code {
                         KeyCode::Char(c) => {
-                            if key_event.modifiers.contains(KeyModifiers::CONTROL) && c == 'c' {
-                                print!("^C\r\n");
+                            if key_event.modifiers.contains(KeyModifiers::CONTROL) && c == 'd' {
+                                print!("\r\n");
                                 disable_raw_mode()?;
                                 std::process::exit(0);
+                            } else if key_event.modifiers.contains(KeyModifiers::CONTROL)
+                                && c == 'c'
+                            {
+                                print!("\r\n");
+                                input_buffer.clear();
+                                break;
                             }
                             input_buffer.push(c);
                             print!("{}", c);

@@ -1,10 +1,10 @@
-use std::process::Command;
 use super::executor::*;
+use std::process::Command;
 #[derive(Debug)]
 pub enum CommandEnum {
     Cp(Vec<String>),
     Pwd,
-    Cd(String),
+    Cd(Vec<String>),
     Echo(Vec<String>),
     Mkdir(String),
     Exit,
@@ -34,15 +34,9 @@ pub fn parse_input(input: &str) -> Vec<CommandEnum> {
         let cmd = parts[0];
         let args = &parts[1..];
         let parsed = match cmd {
-            "cp" =>
-                CommandEnum::Cp(
-                    args
-                        .iter()
-                        .map(|r| r.to_string())
-                        .collect()
-                ),
+            "cp" => CommandEnum::Cp(args.iter().map(|r| r.to_string()).collect()),
             "pwd" => CommandEnum::Pwd,
-            "cd" => CommandEnum::Cd(args.get(0).unwrap_or(&"/").to_string()),
+            "cd" => CommandEnum::Cd(args.to_vec().iter().map(|s| s.to_string()).collect()),
             "echo" => CommandEnum::Echo(args.iter().map(|s| s.to_string()).collect()),
             "mkdir" => CommandEnum::Mkdir(args.get(0).unwrap_or(&"").to_string()),
             "exit" => CommandEnum::Exit,
@@ -67,7 +61,7 @@ pub fn execute_all(cmds: Vec<CommandEnum>) -> bool {
     }
     true
 }
-pub fn execute_clear(){
+pub fn execute_clear() {
     Command::new("clear")
         .status()
         .expect("Failed to execute clear command");

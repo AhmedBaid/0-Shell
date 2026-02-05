@@ -6,19 +6,19 @@ use std::env;
 pub fn execute(cmd: CommandEnum) -> bool {
     match cmd {
         CommandEnum::Cp(c) => if c.len() != 2 {
-            println!("cp: missing file operand");
+            eprintln!("cp: missing file operand");
         } else {
             cp(c);
         }
         CommandEnum::Pwd => {
             if let Ok(dir) = env::current_dir() {
-                println!("{}", dir.display());
+                eprintln!("{}", dir.display());
             }
         }
 
         CommandEnum::Mkdir(dir) => {
             if let Err(e) = std::fs::create_dir(&dir) {
-                println!("mkdir: {}", e);
+                eprintln!("mkdir: {}", e);
             }
         }
 
@@ -27,7 +27,7 @@ pub fn execute(cmd: CommandEnum) -> bool {
         }
 
         CommandEnum::Echo(args) => {
-            println!("{}", args.join(" "));
+            eprintln!("{}", args.join(" "));
         }
 
         CommandEnum::Exit => {
@@ -35,7 +35,7 @@ pub fn execute(cmd: CommandEnum) -> bool {
         }
 
         CommandEnum::Unknown(cmd) => {
-            println!("command not found: {}", cmd);
+            eprintln!("command not found: {}", cmd);
         }
     }
     true
