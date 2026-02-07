@@ -30,8 +30,7 @@ pub fn echo(args: Vec<String>) {
 
         buffer.push_str(&line);
     }
-
     let cleaned = buffer.replace('"', "").replace('\'', "").replace("\\n", "\n");
 
-    print!("{}", cleaned);
+    println!("{}", cleaned);
 }
