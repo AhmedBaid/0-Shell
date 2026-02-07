@@ -1,4 +1,4 @@
-use crate::{ command_cd, commands::{ cat::cat, cp::*, echo::*, rm::rm , ls::ls } };
+use crate::commands::{cat::cat, cd::command_cd, cp::*, echo::*, ls::ls, rm::rm};
 
 use super::parser::*;
 use std::env;
@@ -28,8 +28,10 @@ pub fn execute(cmd: CommandEnum) -> bool {
         }
 
         CommandEnum::Mkdir(dir) => {
-            if let Err(e) = std::fs::create_dir(&dir) {
-                eprintln!("mkdir: {}", e);
+            for d in dir {
+                if let Err(e) = std::fs::create_dir(&d) {
+                    eprintln!("mkdir: cannot create directory '{}': {}", d, e);
+                }
             }
         }
 

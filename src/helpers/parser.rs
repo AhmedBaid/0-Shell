@@ -1,5 +1,6 @@
 use super::executor::*;
 use std::process::Command;
+
 #[derive(Debug)]
 pub enum CommandEnum {
     Rm(Vec<String>),
@@ -7,66 +8,171 @@ pub enum CommandEnum {
     Pwd,
     Cd(Vec<String>),
     Echo(Vec<String>),
-    Mkdir(String),
+    Mkdir(Vec<String>),
     Exit,
     Unknown(String),
     Cat(Vec<String>),
     Ls(Vec<String>),
 }
 
-pub fn parse_input(input: &str) -> Vec<CommandEnum> {
+#[derive(Debug)]
+pub enum ParseResult {
+    Ok(Vec<CommandEnum>),
+    Incomplete,
+    Err(String),
+}
+
+fn parse_tokens(input: &str) -> Result<Vec<Vec<String>>, String> {
+    let mut commands: Vec<Vec<String>> = Vec::new();
+    let mut current_args: Vec<String> = Vec::new();
+    let mut current_token = String::new();
+
+    #[derive(Clone, Copy, PartialEq)]
+    enum Mode {
+        Normal,
+        Single,
+        Double,
+    }
+
+    let mut mode = Mode::Normal;
+    let mut escaped = false;
+    let mut chars = input.chars().peekable();
+
+    while let Some(c) = chars.next() {
+        if escaped {
+            match mode {
+                Mode::Normal => {
+                    current_token.push(c);
+                }
+                Mode::Double => {
+                    if c == '"' || c == '\\' {
+                        current_token.push(c);
+                    } else {
+                        current_token.push('\\');
+                        current_token.push(c);
+                    }
+                }
+                Mode::Single => {
+                    current_token.push('\\');
+                    current_token.push(c);
+                }
+            }
+            escaped = false;
+        } else {
+            match mode {
+                Mode::Normal => {
+                    if c == '\\' {
+                        escaped = true;
+                    } else if c == '\'' {
+                        mode = Mode::Single;
+                    } else if c == '"' {
+                        mode = Mode::Double;
+                    } else if c == '&' {
+                        if let Some(&next_c) = chars.peek() {
+                            if next_c == '&' {
+                                chars.next();
+
+                                if !current_token.is_empty() {
+                                    current_args.push(current_token.clone());
+                                    current_token.clear();
+                                }
+                                if !current_args.is_empty() {
+                                    commands.push(current_args.clone());
+                                    current_args.clear();
+                                }
+                                continue;
+                            }
+                        }
+                        current_token.push(c);
+                    } else if c.is_whitespace() {
+                        if !current_token.is_empty() {
+                            current_args.push(current_token.clone());
+                            current_token.clear();
+                        }
+                    } else {
+                        current_token.push(c);
+                    }
+                }
+                Mode::Single => {
+                    if c == '\'' {
+                        mode = Mode::Normal;
+                    } else {
+                        current_token.push(c);
+                    }
+                }
+                Mode::Double => {
+                    if c == '\\' {
+                        escaped = true;
+                    } else if c == '"' {
+                        mode = Mode::Normal;
+                    } else {
+                        current_token.push(c);
+                    }
+                }
+            }
+        }
+    }
+
+    if escaped {
+        return Err("Incomplete".to_string());
+    }
+
+    if mode != Mode::Normal {
+        return Err("Incomplete".to_string());
+    }
+
+    if !current_token.is_empty() {
+        current_args.push(current_token);
+    }
+    if !current_args.is_empty() {
+        commands.push(current_args);
+    }
+
+    Ok(commands)
+}
+
+pub fn parse_input(input: &str) -> ParseResult {
     let trimmed = input.trim();
     if trimmed.is_empty() {
-        return vec![];
+        return ParseResult::Ok(vec![]);
     }
 
-    let chunks: Vec<&str> = trimmed
-        .split("&&")
-      
-        .filter(|s| !s.is_empty())
-        .collect();
+    match parse_tokens(trimmed) {
+        Ok(tokenized_commands) => {
+            let mut cmds = Vec::new();
 
-    let mut cmds = Vec::new();
+            for args in tokenized_commands {
+                if args.is_empty() {
+                    continue;
+                }
 
-    for chunk in chunks {
-        let parts: Vec<&str> = chunk.split(' ').collect();
-        if parts.is_empty() {
-            continue;
-        }
+                let cmd = args[0].as_str();
+                let cmd_args = args[1..].to_vec();
 
-        let cmd = parts[0];
-        let args = &parts[1..];
-      // println!("{cmd}--> {args:?}");
-        let parsed = match cmd {
-            "ls" => CommandEnum::Ls(args.iter().map(|s| s.to_string()).collect()),
-            "cat"=>CommandEnum::Cat(args.iter().map(|s| s.to_string()).collect()), 
-            "cp" => CommandEnum::Cp(args.iter().map(|s| s.to_string()).collect()),
-            "pwd" => CommandEnum::Pwd,
-            "cd" => CommandEnum::Cd(args.to_vec().iter().map(|s| s.to_string()).collect()),
-            "echo" => CommandEnum::Echo(args.iter().map(|s| s.to_string()).collect()),
-            "rm" =>
-                CommandEnum::Rm(
-                    args
-                        .iter()
-                        .map(|r| r.to_string())
-                        .collect()
-                ),
-           
-           
-            "mkdir" => CommandEnum::Mkdir(args.get(0).unwrap_or(&"").to_string()),
-            "exit" => CommandEnum::Exit,
-            "clear" => {
-                execute_clear();
-                continue;
+                let parsed = match cmd {
+                    "ls" => CommandEnum::Ls(cmd_args),
+                    "cat" => CommandEnum::Cat(cmd_args),
+                    "cp" => CommandEnum::Cp(cmd_args),
+                    "pwd" => CommandEnum::Pwd,
+                    "cd" => CommandEnum::Cd(cmd_args),
+                    "echo" => CommandEnum::Echo(cmd_args),
+                    "rm" => CommandEnum::Rm(cmd_args),
+                    "mkdir" => CommandEnum::Mkdir(cmd_args),
+                    "exit" => CommandEnum::Exit,
+                    "clear" => {
+                        execute_clear();
+                        continue;
+                    }
+                    _ => CommandEnum::Unknown(args[0].clone()),
+                };
+                cmds.push(parsed);
             }
-            _ => CommandEnum::Unknown(cmd.to_string()),
-        };
-
-        cmds.push(parsed);
+            ParseResult::Ok(cmds)
+        }
+        Err(_) => ParseResult::Incomplete,
     }
-
-    cmds
 }
+
 pub fn execute_all(cmds: Vec<CommandEnum>) -> bool {
     for cmd in cmds {
         let keep_running = execute(cmd);
@@ -76,6 +182,9 @@ pub fn execute_all(cmds: Vec<CommandEnum>) -> bool {
     }
     true
 }
+
 pub fn execute_clear() {
-    Command::new("clear").status().expect("Failed to execute clear command");
+    Command::new("clear")
+        .status()
+        .expect("Failed to execute clear command");
 }

@@ -1,95 +1,130 @@
 use std::env;
-use std::io::{ self, Write };
+use std::io::{self, Write};
+
 pub mod commands;
 pub mod helpers;
-use commands::cd::*;
-use helpers::parser::*;
-use helpers::print_banner::*;
 
-use crossterm::cursor::MoveToColumn;
-use crossterm::event::{ self, Event, KeyCode, KeyEventKind, KeyModifiers };
-use crossterm::execute;
-use crossterm::terminal::{ disable_raw_mode, enable_raw_mode, Clear, ClearType };
+use helpers::parser::{execute_all, parse_input, ParseResult};
+use helpers::print_banner::print_banner;
 
-use crate::helpers::check_quotes::quotes_balanced;
-
+use crossterm::{
+    event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
+    terminal::{disable_raw_mode, enable_raw_mode},
+};
 const GREEN: &str = "\x1b[32m";
 const RESET: &str = "\x1b[0m";
-
 fn main() -> io::Result<()> {
     print_banner();
     enable_raw_mode()?;
 
     let mut history: Vec<String> = vec![];
+    let mut input_buffer = String::new();
+    let mut history_index = 0;
 
+    let mut is_continuation = false;
+
+    let current_dir = env::current_dir().expect("Failed to get current working directory");
+    let prompt_text = format!("{GREEN}{}$ {RESET}", current_dir.display());
     loop {
-        let current_dir = env::current_dir().expect("Failed to get current working directory");
-        let prompt_text = format!("{GREEN}{}$ {RESET}", current_dir.display());
+        if !is_continuation {
 
-        print!("{}", prompt_text);
+            print!("{}", prompt_text);
+        } else {
+            print!("> ");
+        }
         io::stdout().flush()?;
-
-        let mut input_buffer = String::new();
-        let mut history_index = history.len();
 
         loop {
             if let Event::Key(key_event) = event::read()? {
                 if key_event.kind == KeyEventKind::Press {
                     match key_event.code {
                         KeyCode::Char(c) => {
-                            if key_event.modifiers.contains(KeyModifiers::CONTROL) && c == 'd' {
-                                print!("\r\n");
-                                disable_raw_mode()?;
-                                std::process::exit(0);
-                            } else if
-                                key_event.modifiers.contains(KeyModifiers::CONTROL) &&
-                                c == 'c'
-                            {
-                                print!("\r\n");
-                                input_buffer.clear();
-                                break;
+                            if key_event.modifiers.contains(KeyModifiers::CONTROL) {
+                                match c {
+                                    'd' => {
+                                        if input_buffer.is_empty() {
+                                            print!("\r\n");
+                                            disable_raw_mode()?;
+                                            std::process::exit(0);
+                                        }
+                                    }
+                                    'c' => {
+                                        print!("\r\n");
+                                        input_buffer.clear();
+                                        is_continuation = false;
+                                        break; // Break inner loop to redraw prompt
+                                    }
+                                    _ => {}
+                                }
+                            } else {
+                                input_buffer.push(c);
+                                print!("{}", c);
+                                io::stdout().flush()?;
                             }
-                            input_buffer.push(c);
-                            print!("{}", c);
-                            io::stdout().flush()?;
                         }
 
                         KeyCode::Backspace => {
                             if !input_buffer.is_empty() {
-                                input_buffer.pop();
-                                print!("\x08 \x08");
-                                io::stdout().flush()?;
+                                if !input_buffer.ends_with('\n') {
+                                    input_buffer.pop();
+                                    print!("\x08 \x08");
+                                    io::stdout().flush()?;
+                                }
                             }
                         }
 
                         KeyCode::Enter => {
-                            if quotes_balanced(&input_buffer) {
-                                print!("\r\n");
-                                break;
-                            } else {
-                                input_buffer.push_str("\r\n");
-                                print!("\r\ndequoted >");
-                                io::stdout().flush()?;
+                            print!("\r\n");
+                            io::stdout().flush()?;
+
+                            match parse_input(&input_buffer) {
+                                ParseResult::Ok(cmds) => {
+                                    if !input_buffer.trim().is_empty() {
+                                        if history.last() != Some(&input_buffer) {
+                                            history.push(input_buffer.clone());
+                                        }
+                                    }
+                                    history_index = history.len();
+
+                                    disable_raw_mode()?;
+                                    let keep_running = execute_all(cmds);
+                                    enable_raw_mode()?;
+
+                                    if !keep_running {
+                                        disable_raw_mode()?;
+                                        std::process::exit(0);
+                                    }
+
+                                    input_buffer.clear();
+                                    is_continuation = false;
+                                    break;
+                                }
+                                ParseResult::Incomplete => {
+                                    input_buffer.push('\n');
+                                    is_continuation = true;
+                                    break;
+                                }
+                                ParseResult::Err(e) => {
+                                    println!("Error: {}\r", e);
+                                    input_buffer.clear();
+                                    is_continuation = false;
+                                    break;
+                                }
                             }
                         }
 
                         KeyCode::Up => {
-                            if history_index > 0 {
+                            if !is_continuation && history_index > 0 {
                                 history_index -= 1;
                                 input_buffer = history[history_index].clone();
-
-                                execute!(
-                                    io::stdout(),
-                                    Clear(ClearType::CurrentLine),
-                                    MoveToColumn(0)
-                                )?;
-                                print!("{}{}", prompt_text, input_buffer);
+                                print!("{}", prompt_text);
+                                print!("$ {}", input_buffer);
                                 io::stdout().flush()?;
                             }
                         }
 
                         KeyCode::Down => {
-                            if history_index < history.len() {
+                            if !is_continuation && history_index < history.len() {
                                 history_index += 1;
 
                                 if history_index < history.len() {
@@ -97,13 +132,8 @@ fn main() -> io::Result<()> {
                                 } else {
                                     input_buffer.clear();
                                 }
-
-                                execute!(
-                                    io::stdout(),
-                                    Clear(ClearType::CurrentLine),
-                                    MoveToColumn(0)
-                                )?;
-                                print!("{}{}", prompt_text, input_buffer);
+                                print!("{}", prompt_text);
+                                print!("$ {}", input_buffer);
                                 io::stdout().flush()?;
                             }
                         }
@@ -112,23 +142,5 @@ fn main() -> io::Result<()> {
                 }
             }
         }
-
-        if !input_buffer.is_empty() {
-            if history.last() != Some(&input_buffer) {
-                history.push(input_buffer.clone());
-            }
-
-            let commands = parse_input(&input_buffer);
-
-            disable_raw_mode()?;
-            let should_continue = execute_all(commands);
-            enable_raw_mode()?;
-
-            if !should_continue {
-                break;
-            }
-        }
     }
-
-    Ok(())
 }
