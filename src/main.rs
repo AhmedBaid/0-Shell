@@ -4,12 +4,14 @@ use std::io::{self, Write};
 pub mod commands;
 pub mod helpers;
 
+use crossterm::cursor::MoveToColumn;
+use crossterm::execute;
 use helpers::parser::{execute_all, parse_input, ParseResult};
 use helpers::print_banner::print_banner;
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
-    terminal::{disable_raw_mode, enable_raw_mode},
+    terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType},
 };
 const GREEN: &str = "\x1b[32m";
 const RESET: &str = "\x1b[0m";
@@ -23,11 +25,10 @@ fn main() -> io::Result<()> {
 
     let mut is_continuation = false;
 
-    let current_dir = env::current_dir().expect("Failed to get current working directory");
-    let prompt_text = format!("{GREEN}{}$ {RESET}", current_dir.display());
     loop {
+        let current_dir = env::current_dir().expect("Failed to get current working directory");
+        let prompt_text = format!("{GREEN}{}$ {RESET}", current_dir.display());
         if !is_continuation {
-
             print!("{}", prompt_text);
         } else {
             print!("> ");
@@ -52,7 +53,7 @@ fn main() -> io::Result<()> {
                                         print!("\r\n");
                                         input_buffer.clear();
                                         is_continuation = false;
-                                        break; // Break inner loop to redraw prompt
+                                        break;
                                     }
                                     _ => {}
                                 }
@@ -114,17 +115,22 @@ fn main() -> io::Result<()> {
                         }
 
                         KeyCode::Up => {
-                            if !is_continuation && history_index > 0 {
+                            if history_index > 0 {
                                 history_index -= 1;
                                 input_buffer = history[history_index].clone();
-                                print!("{}", prompt_text);
-                                print!("$ {}", input_buffer);
+
+                                execute!(
+                                    io::stdout(),
+                                    Clear(ClearType::CurrentLine),
+                                    MoveToColumn(0)
+                                )?;
+                                print!("{}{}", prompt_text, input_buffer);
                                 io::stdout().flush()?;
                             }
                         }
 
                         KeyCode::Down => {
-                            if !is_continuation && history_index < history.len() {
+                            if history_index < history.len() {
                                 history_index += 1;
 
                                 if history_index < history.len() {
@@ -132,8 +138,13 @@ fn main() -> io::Result<()> {
                                 } else {
                                     input_buffer.clear();
                                 }
-                                print!("{}", prompt_text);
-                                print!("$ {}", input_buffer);
+
+                                execute!(
+                                    io::stdout(),
+                                    Clear(ClearType::CurrentLine),
+                                    MoveToColumn(0)
+                                )?;
+                                print!("{}{}", prompt_text, input_buffer);
                                 io::stdout().flush()?;
                             }
                         }
