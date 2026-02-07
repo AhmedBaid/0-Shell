@@ -1,10 +1,11 @@
-use crate::{ command_cd, commands::{ cat::cat, cp::*, echo::*, rm::rm , ls::ls } };
+use crate::{ command_cd, commands::{ cat::cat, cp::*, echo::*, ls::ls, mv::mv, rm::rm } };
 
 use super::parser::*;
 use std::env;
 
 pub fn execute(cmd: CommandEnum) -> bool {
     match cmd {
+        CommandEnum::Mv(c) => mv(c),
         CommandEnum::Ls(c) => ls(c),
         CommandEnum::Rm(c) => {
             if c.is_empty() {

@@ -4,6 +4,7 @@ use std::process::Command;
 pub enum CommandEnum {
     Rm(Vec<String>),
     Cp(Vec<String>),
+    Mv(Vec<String>),
     Pwd,
     Cd(Vec<String>),
     Echo(Vec<String>),
@@ -38,6 +39,7 @@ pub fn parse_input(input: &str) -> Vec<CommandEnum> {
         let args = &parts[1..];
       // println!("{cmd}--> {args:?}");
         let parsed = match cmd {
+            "mv"=>CommandEnum::Mv(args.iter().map(|s| s.to_string()).collect()),
             "ls" => CommandEnum::Ls(args.iter().map(|s| s.to_string()).collect()),
             "cat"=>CommandEnum::Cat(args.iter().map(|s| s.to_string()).collect()), 
             "cp" => CommandEnum::Cp(args.iter().map(|s| s.to_string()).collect()),
