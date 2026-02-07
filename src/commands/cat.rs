@@ -1,4 +1,4 @@
-use std::{ fs::File, io::{ self, Write }, path::{  Path } };
+use std::{ fs::File, io::{ self, Write }, path::{ Path } };
 //use std::io::BufRead;
 use std::io::{ Read };
 
@@ -17,17 +17,8 @@ pub fn cat(args: Vec<String>) {
             let source_path = Path::new(&file);
 
             let file_open = File::open(source_path);
-            //    let reader;
             match file_open {
                 Ok(mut f) => {
-                    /*    let reader = BufReader::new(f);
-                    for line in reader.lines() {
-                        match line {
-                            Ok(e) => print!("{}", e),
-                            Err(e) => println!("{}", e),
-                        }
-                    } */
-
                     let mut buf = [0u8; 8192];
 
                     loop {
