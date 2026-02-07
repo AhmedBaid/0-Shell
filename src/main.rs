@@ -1,5 +1,5 @@
 use std::env;
-use std::io::{self, Write};
+use std::io::{ self, Write };
 pub mod commands;
 pub mod helpers;
 use commands::cd::*;
@@ -7,9 +7,11 @@ use helpers::parser::*;
 use helpers::print_banner::*;
 
 use crossterm::cursor::MoveToColumn;
-use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
+use crossterm::event::{ self, Event, KeyCode, KeyEventKind, KeyModifiers };
 use crossterm::execute;
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
+use crossterm::terminal::{ disable_raw_mode, enable_raw_mode, Clear, ClearType };
+
+use crate::helpers::check_quotes::quotes_balanced;
 
 const GREEN: &str = "\x1b[32m";
 const RESET: &str = "\x1b[0m";
@@ -39,8 +41,9 @@ fn main() -> io::Result<()> {
                                 print!("\r\n");
                                 disable_raw_mode()?;
                                 std::process::exit(0);
-                            } else if key_event.modifiers.contains(KeyModifiers::CONTROL)
-                                && c == 'c'
+                            } else if
+                                key_event.modifiers.contains(KeyModifiers::CONTROL) &&
+                                c == 'c'
                             {
                                 print!("\r\n");
                                 input_buffer.clear();
@@ -60,8 +63,14 @@ fn main() -> io::Result<()> {
                         }
 
                         KeyCode::Enter => {
-                            print!("\r\n");
-                            break;
+                            if quotes_balanced(&input_buffer) {
+                                print!("\r\n");
+                                break;
+                            } else {
+                                input_buffer.push_str("\r\n");
+                                print!("\r\ndequoted >");
+                                io::stdout().flush()?;
+                            }
                         }
 
                         KeyCode::Up => {
@@ -104,7 +113,7 @@ fn main() -> io::Result<()> {
             }
         }
 
-        if !input_buffer.trim().is_empty() {
+        if !input_buffer.is_empty() {
             if history.last() != Some(&input_buffer) {
                 history.push(input_buffer.clone());
             }

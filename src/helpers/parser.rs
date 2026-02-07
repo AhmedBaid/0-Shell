@@ -22,21 +22,21 @@ pub fn parse_input(input: &str) -> Vec<CommandEnum> {
 
     let chunks: Vec<&str> = trimmed
         .split("&&")
-        .map(|s| s.trim())
+      
         .filter(|s| !s.is_empty())
         .collect();
 
     let mut cmds = Vec::new();
 
     for chunk in chunks {
-        let parts: Vec<&str> = chunk.split_whitespace().collect();
+        let parts: Vec<&str> = chunk.split(' ').collect();
         if parts.is_empty() {
             continue;
         }
 
         let cmd = parts[0];
         let args = &parts[1..];
-        println!("{cmd}--> {args:?}");
+      // println!("{cmd}--> {args:?}");
         let parsed = match cmd {
             "ls" => CommandEnum::Ls(args.iter().map(|s| s.to_string()).collect()),
             "cat"=>CommandEnum::Cat(args.iter().map(|s| s.to_string()).collect()), 
