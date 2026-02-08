@@ -1,5 +1,5 @@
-use std::{env, io::ErrorKind, path::PathBuf};
 use crate::commands::pwd_state::PwdState;
+use std::{env, io::ErrorKind, path::PathBuf};
 
 pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) {
     if args.len() > 1 {
@@ -41,8 +41,8 @@ pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) {
         Ok(_) => {
             if let Ok(new_current) = env::current_dir() {
                 pwd_state.set_states(
-                    new_current.display().to_string(), 
-                    current_before_move.display().to_string()
+                    new_current.display().to_string(),
+                    current_before_move.display().to_string(),
                 );
 
                 if !args.is_empty() && args[0] == "-" {
@@ -51,9 +51,13 @@ pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) {
             }
         }
         Err(e) => match e.kind() {
-            ErrorKind::NotFound => eprintln!("cd: {}: No such file or directory", target_dir.display()),
-            ErrorKind::PermissionDenied => eprintln!("cd: {}: Permission denied", target_dir.display()),
-            ErrorKind::NotADirectory => eprintln!("cd: {}: Not a directory", target_dir.display()),
+            ErrorKind::NotFound => {
+                eprintln!("cd:  No such file or directory : {}", target_dir.display())
+            }
+            ErrorKind::PermissionDenied => {
+                eprintln!("cd: Permission denied : {}", target_dir.display())
+            }
+            ErrorKind::NotADirectory => eprintln!("cd: Not a directory : {}", target_dir.display()),
             _ => eprintln!("cd: {}: {}", target_dir.display(), e),
         },
     }

@@ -1,7 +1,6 @@
-use crate::commands::pwd_state::*;
 use super::executor::*;
+use crate::commands::pwd_state::*;
 use std::process::Command;
-
 
 #[derive(Debug)]
 pub enum CommandEnum {
@@ -11,7 +10,7 @@ pub enum CommandEnum {
     Pwd,
     Cd(Vec<String>),
     Echo(Vec<String>),
-    Mkdir(Vec<String>),
+    Mkdir(Vec<String>, Vec<String>),
     Exit,
     Unknown(String),
     Cat(Vec<String>),
@@ -150,7 +149,12 @@ pub fn parse_input(input: &str) -> ParseResult {
                 }
 
                 let cmd = args[0].as_str();
-                let cmd_args = args[1..].to_vec();
+                let mut cmd_args = args[1..].to_vec();
+                let uses_args = cmd_args.clone();
+                cmd_args = cmd_args
+                    .iter()
+                    .map(|ele| ele.replace("\n", "\\n"))
+                    .collect();
 
                 let parsed = match cmd {
                     "ls" => CommandEnum::Ls(cmd_args),
@@ -158,9 +162,9 @@ pub fn parse_input(input: &str) -> ParseResult {
                     "cp" => CommandEnum::Cp(cmd_args),
                     "pwd" => CommandEnum::Pwd,
                     "cd" => CommandEnum::Cd(cmd_args),
-                    "echo" => CommandEnum::Echo(cmd_args),
+                    "echo" => CommandEnum::Echo(uses_args),
                     "rm" => CommandEnum::Rm(cmd_args),
-                    "mkdir" => CommandEnum::Mkdir(cmd_args),
+                    "mkdir" => CommandEnum::Mkdir(uses_args, cmd_args),
                     "exit" => CommandEnum::Exit,
                     "clear" => {
                         execute_clear();

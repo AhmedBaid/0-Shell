@@ -1,7 +1,11 @@
-use std::{ fs::File, io::{ self, Read, Write }, path::Path };
 use crossterm::{
-    event::{ self, Event, KeyCode, KeyEventKind, KeyModifiers },
-    terminal::{ disable_raw_mode, enable_raw_mode },
+    event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
+    terminal::enable_raw_mode,
+};
+use std::{
+    fs::File,
+    io::{self, Read, Write},
+    path::Path,
 };
 
 pub fn cat(args: Vec<String>) {
@@ -22,7 +26,7 @@ pub fn cat(args: Vec<String>) {
                     match key_event.code {
                         KeyCode::Char(c) if key_event.modifiers.contains(KeyModifiers::CONTROL) => {
                             if c == 'd' {
-                               print!("\r\n");
+                                print!("\r\n");
                                 break;
                             } else if c == 'c' {
                                 print!("^C\r\n");
@@ -32,8 +36,8 @@ pub fn cat(args: Vec<String>) {
                         }
 
                         KeyCode::Char(c) => {
-                            print!("{}", c); // Echo the character to screen
-                            input_buffer.push(c); // Save to buffer
+                            print!("{}", c);
+                            input_buffer.push(c);
                             io::stdout().flush().ok();
                         }
 
@@ -70,9 +74,7 @@ pub fn cat(args: Vec<String>) {
                                 break;
                             }
                             Ok(n) => {
-                                io::stdout()
-                                    .write_all(&buf[..n])
-                                    .ok();
+                                io::stdout().write_all(&buf[..n]).ok();
                             }
                             Err(e) => {
                                 eprintln!("cat: {}: {}", file, e);

@@ -1,5 +1,5 @@
 use crate::commands::{
-    cat::cat, cd::command_cd, cp::*, echo::*, ls::ls, mv::mv, pwd_state::PwdState, rm::rm
+    cat::cat, cd::command_cd, cp::*, echo::*, ls::ls, mv::mv, pwd_state::PwdState, rm::rm,
 };
 
 use super::parser::*;
@@ -27,10 +27,16 @@ pub fn execute(cmd: CommandEnum, pwd_state: &mut PwdState) -> bool {
             eprintln!("{}", pwd_state.get_current_dir());
         }
 
-        CommandEnum::Mkdir(dir) => {
+        CommandEnum::Mkdir(dir, error_dir) => {
+            let mut count = 0;
             for d in dir {
+                count += 1;
                 if let Err(e) = std::fs::create_dir(&d) {
-                    eprintln!("mkdir: cannot create directory '{}': {}", d, e);
+                    eprintln!(
+                        "mkdir: cannot create directory '{}': {}",
+                        error_dir[count - 1],
+                        e
+                    );
                 }
             }
         }
@@ -48,7 +54,7 @@ pub fn execute(cmd: CommandEnum, pwd_state: &mut PwdState) -> bool {
         }
 
         CommandEnum::Unknown(cmd) => {
-            eprintln!("command not found: {}", cmd);
+            eprintln!("command not found: {}", cmd.replace("\n", "\\n"));
         }
     }
     true

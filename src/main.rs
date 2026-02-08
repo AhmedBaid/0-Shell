@@ -23,7 +23,7 @@ fn main() -> io::Result<()> {
     let mut history: Vec<String> = vec![];
     let mut input_buffer = String::new();
     let mut history_index = 0;
-
+    let mut input_purline = String::new();
     let mut is_continuation = false;
 
     let start_dir = env::current_dir().expect("Failed to get current working directory");
@@ -74,10 +74,13 @@ fn main() -> io::Result<()> {
                                 break;
                             }
 
-                            if cursor_idx >= input_buffer.len() {
+                            if cursor_idx >= input_purline.len() {
                                 input_buffer.push(c);
+                                input_purline.push(c);
                             } else {
                                 input_buffer.insert(cursor_idx, c);
+                                input_purline.insert(cursor_idx, c);
+
                             }
 
                             execute!(
@@ -85,7 +88,7 @@ fn main() -> io::Result<()> {
                                 cursor::MoveToColumn(prompt_len as u16),
                                 Clear(ClearType::UntilNewLine)
                             )?;
-                            print!("{}", input_buffer);
+                            print!("{}", input_purline);
 
                             execute!(
                                 stdout(),
@@ -95,9 +98,11 @@ fn main() -> io::Result<()> {
                         }
 
                         KeyCode::Backspace => {
-                            if !input_buffer.is_empty() {
-                                if cursor_idx > 0 && cursor_idx <= input_buffer.len() {
+                            if !input_purline.is_empty() {
+                                if cursor_idx > 0 && cursor_idx <= input_purline.len() {
                                     input_buffer.remove(cursor_idx - 1);
+                                    input_purline.remove(cursor_idx - 1);
+
 
                                     // Redraw line
                                     execute!(
@@ -105,7 +110,7 @@ fn main() -> io::Result<()> {
                                         cursor::MoveToColumn(prompt_len as u16),
                                         Clear(ClearType::UntilNewLine)
                                     )?;
-                                    print!("{}", input_buffer);
+                                    print!("{}", input_purline);
 
                                     execute!(
                                         stdout(),
@@ -123,6 +128,7 @@ fn main() -> io::Result<()> {
                             print!("\r\n");
                             io::stdout().flush()?;
 
+                            input_purline.clear();
                             match parse_input(&input_buffer) {
                                 ParseResult::Ok(cmds) => {
                                     if !input_buffer.trim().is_empty() {
@@ -146,6 +152,7 @@ fn main() -> io::Result<()> {
                                     break;
                                 }
                                 ParseResult::Incomplete => {
+
                                     if !input_buffer.trim().is_empty() {
                                         if history.last() != Some(&input_buffer) {
                                             history.push(input_buffer.clone());
@@ -157,6 +164,7 @@ fn main() -> io::Result<()> {
                                     break;
                                 }
                                 ParseResult::Err(e) => {
+
                                     println!("Error: {}\r", e);
                                     input_buffer.clear();
                                     is_continuation = false;
