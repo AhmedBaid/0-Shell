@@ -1,5 +1,7 @@
+use crate::commands::pwd_state::*;
 use super::executor::*;
 use std::process::Command;
+
 
 #[derive(Debug)]
 pub enum CommandEnum {
@@ -173,9 +175,9 @@ pub fn parse_input(input: &str) -> ParseResult {
     }
 }
 
-pub fn execute_all(cmds: Vec<CommandEnum>) -> bool {
+pub fn execute_all(cmds: Vec<CommandEnum>, pwd_state: &mut PwdState) -> bool {
     for cmd in cmds {
-        let keep_running = execute(cmd);
+        let keep_running = execute(cmd, pwd_state);
         if !keep_running {
             return false;
         }

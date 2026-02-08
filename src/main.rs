@@ -4,6 +4,7 @@ use std::io::{self, Write};
 pub mod commands;
 pub mod helpers;
 
+use commands::pwd_state::*;
 use crossterm::cursor::MoveToColumn;
 use crossterm::execute;
 use helpers::parser::{execute_all, parse_input, ParseResult};
@@ -25,9 +26,13 @@ fn main() -> io::Result<()> {
 
     let mut is_continuation = false;
 
+    let current_dir = env::current_dir().expect("Failed to get current working directory");
+    let mut pwd_state = PwdState::new(
+        current_dir.display().to_string(),
+        current_dir.display().to_string(),
+    );
     loop {
-        let current_dir = env::current_dir().expect("Failed to get current working directory");
-        let prompt_text = format!("{GREEN}{}$ {RESET}", current_dir.display());
+        let prompt_text = format!("{GREEN}{}$ {RESET}", pwd_state.get_current_dir());
         if !is_continuation {
             print!("{}", prompt_text);
         } else {
@@ -88,7 +93,7 @@ fn main() -> io::Result<()> {
                                     history_index = history.len();
 
                                     disable_raw_mode()?;
-                                    let keep_running = execute_all(cmds);
+                                    let keep_running = execute_all(cmds, &mut pwd_state);
                                     enable_raw_mode()?;
 
                                     if !keep_running {
