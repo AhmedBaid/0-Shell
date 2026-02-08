@@ -1,9 +1,10 @@
-use crate::{ command_cd, commands::{ cat::cat, cp::*, echo::*, ls::ls, mv::mv, rm::rm } };
+use crate::commands::{
+    cat::cat, cd::command_cd, cp::*, echo::*, ls::ls, pwd_state::PwdState, rm::rm,
+};
 
 use super::parser::*;
-use std::env;
 
-pub fn execute(cmd: CommandEnum) -> bool {
+pub fn execute(cmd: CommandEnum, pwd_state: &mut PwdState) -> bool {
     match cmd {
         CommandEnum::Mv(c) => mv(c),
         CommandEnum::Ls(c) => ls(c),
@@ -23,19 +24,21 @@ pub fn execute(cmd: CommandEnum) -> bool {
             }
         }
         CommandEnum::Pwd => {
-            if let Ok(dir) = env::current_dir() {
-                eprintln!("{}", dir.display());
-            }
+            println!("hnaya drtha b pwd: {:?}", pwd_state);
+
+            eprintln!("{}", pwd_state.get_current_dir());
         }
 
         CommandEnum::Mkdir(dir) => {
-            if let Err(e) = std::fs::create_dir(&dir) {
-                eprintln!("mkdir: {}", e);
+            for d in dir {
+                if let Err(e) = std::fs::create_dir(&d) {
+                    eprintln!("mkdir: cannot create directory '{}': {}", d, e);
+                }
             }
         }
 
         CommandEnum::Cd(path) => {
-            command_cd(path);
+            command_cd(path, pwd_state);
         }
 
         CommandEnum::Echo(args) => {
