@@ -70,6 +70,7 @@ fn main() -> io::Result<()> {
                             {
                                 print!("\r\n");
                                 input_buffer.clear();
+                                is_continuation = false;
                                 break;
                             }
 
@@ -145,6 +146,12 @@ fn main() -> io::Result<()> {
                                     break;
                                 }
                                 ParseResult::Incomplete => {
+                                    if !input_buffer.trim().is_empty() {
+                                        if history.last() != Some(&input_buffer) {
+                                            history.push(input_buffer.clone());
+                                        }
+                                    }
+                                    history_index = history.len();
                                     input_buffer.push('\n');
                                     is_continuation = true;
                                     break;
@@ -176,7 +183,6 @@ fn main() -> io::Result<()> {
                         KeyCode::Down => {
                             if history_index < history.len() {
                                 history_index += 1;
-
                                 if history_index < history.len() {
                                     input_buffer = history[history_index].clone();
                                 } else {
