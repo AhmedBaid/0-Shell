@@ -11,10 +11,6 @@ impl PwdState {
             old_dir,
         }
     }
-
-    // Updates the state.
-    // new_current: The directory we just moved INTO.
-    // new_old: The directory we just came FROM.
     pub fn set_states(&mut self, new_current: String, new_old: String) {
         self.current_dir = new_current;
         self.old_dir = new_old;
