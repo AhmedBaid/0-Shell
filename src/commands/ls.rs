@@ -55,14 +55,14 @@ pub fn ls(args: Vec<String>) -> bool {
         dirs.push(".".to_string());
     }
 
-    l(files, dirs, errors.clone(), flag);
-    if !errors.is_empty() {
+    if !l(files, dirs, errors.clone(), flag) || !errors.is_empty() {
         return false;
     }
+
     true
 }
 
-fn l(files: Vec<String>, dirs: Vec<String>, errors: Vec<String>, flag: Flag) {
+fn l(files: Vec<String>, dirs: Vec<String>, errors: Vec<String>, flag: Flag) -> bool {
     for err in &errors {
         println!("ls: cannot access '{}': No such file or directory", err);
     }
@@ -100,30 +100,45 @@ fn l(files: Vec<String>, dirs: Vec<String>, errors: Vec<String>, flag: Flag) {
 
         match (flag.a, flag.l, flag.f) {
             (false, false, false) => {
-                let r = get_dir_content(path_str, false).join(" ");
-                if !r.is_empty() {
-                    println!("{r}");
+                if let Ok(r) = get_dir_content(path_str, false) {
+                    let r = r.join(" ");
+                    if !r.is_empty() {
+                        println!("{r}");
+                    }
+                }else {
+                    return false;
                 }
             }
             (true, false, false) => {
-                let r = get_dir_content(path_str, true).join(" ");
-                if !r.is_empty() {
-                    println!("{r}");
+                if let Ok(r) = get_dir_content(path_str, true) {
+                    let r = r.join(" ");
+                    if !r.is_empty() {
+                        println!("{r}");
+                    }
+                }else {
+                    return false;
                 }
             }
             (false, true, _) | (true, true, _) => {
                 print!("{}", run_ls_l(path_str, flag));
             }
             (false, false, true) => {
-                let r = get_dir_content(path_str, false);
-                println!("{}", add_symbols(r, path_str));
+                if let Ok(r) = get_dir_content(path_str, false) {
+                    println!("{}", add_symbols(r, path_str));
+                } else {
+                    return false;
+                }
             }
             (true, false, true) => {
-                let r = get_dir_content(path_str, true);
-                println!("{}", add_symbols(r, path_str));
+                if let Ok(r) = get_dir_content(path_str, true) {
+                    println!("{}", add_symbols(r, path_str));
+                } else {
+                    return false;
+                }
             }
         }
     }
+    true
 }
 
 fn run_ls_l(path: &str, flag: Flag) -> String {
@@ -193,7 +208,7 @@ fn format_long_item(mut name: String, metadata: &fs::Metadata, flag: Flag) -> St
     )
 }
 
-fn get_dir_content(path: &str, show_hidden: bool) -> Vec<String> {
+fn get_dir_content(path: &str, show_hidden: bool) -> Result<Vec<String>, bool> {
     let mut filenames = Vec::new();
     match fs::read_dir(path) {
         Ok(entries) => {
@@ -211,10 +226,11 @@ fn get_dir_content(path: &str, show_hidden: bool) -> Vec<String> {
         }
         Err(e) => {
             eprintln!("ls: cannot access '{}': {}", path, e);
+            return Err(false);
         }
     }
     filenames.sort();
-    filenames
+    Ok(filenames)
 }
 
 fn is_flag(arg: &String, flag: &mut Flag) -> bool {
