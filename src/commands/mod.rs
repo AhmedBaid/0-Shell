@@ -6,3 +6,4 @@ pub mod rm;
 pub mod touch;
 pub mod mv;
 pub mod echo;
+pub mod pwd_state;
