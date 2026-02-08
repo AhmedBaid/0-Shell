@@ -80,7 +80,6 @@ fn main() -> io::Result<()> {
                             } else {
                                 input_buffer.insert(cursor_idx, c);
                                 input_purline.insert(cursor_idx, c);
-
                             }
 
                             execute!(
@@ -102,7 +101,6 @@ fn main() -> io::Result<()> {
                                 if cursor_idx > 0 && cursor_idx <= input_purline.len() {
                                     input_buffer.remove(cursor_idx - 1);
                                     input_purline.remove(cursor_idx - 1);
-
 
                                     // Redraw line
                                     execute!(
@@ -152,7 +150,6 @@ fn main() -> io::Result<()> {
                                     break;
                                 }
                                 ParseResult::Incomplete => {
-
                                     if !input_buffer.trim().is_empty() {
                                         if history.last() != Some(&input_buffer) {
                                             history.push(input_buffer.clone());
@@ -164,7 +161,6 @@ fn main() -> io::Result<()> {
                                     break;
                                 }
                                 ParseResult::Err(e) => {
-
                                     println!("Error: {}\r", e);
                                     input_buffer.clear();
                                     is_continuation = false;
