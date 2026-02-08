@@ -141,8 +141,7 @@ fn main() -> io::Result<()> {
                                     enable_raw_mode()?;
 
                                     if !keep_running {
-                                        disable_raw_mode()?;
-                                        std::process::exit(0);
+                                        break;
                                     }
 
                                     input_buffer.clear();

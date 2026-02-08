@@ -5,26 +5,29 @@ use crate::commands::{
 use super::parser::*;
 
 pub fn execute(cmd: CommandEnum, pwd_state: &mut PwdState) -> bool {
-    match cmd {
+    let succes = match cmd {
         CommandEnum::Mv(c) => mv(c),
         CommandEnum::Ls(c) => ls(c),
         CommandEnum::Rm(c) => {
             if c.is_empty() {
                 println!("rm: missing operand");
+                return false;
             } else {
-                rm(c);
+                return rm(c);
             }
         }
         CommandEnum::Cat(c) => cat(c),
         CommandEnum::Cp(c) => {
             if c.len() != 2 {
                 println!("cp: missing file operand");
+                return false;
             } else {
-                cp(c);
+                return cp(c);
             }
         }
         CommandEnum::Pwd => {
             eprintln!("{}", pwd_state.get_current_dir());
+            return true;
         }
 
         CommandEnum::Mkdir(dir, error_dir) => {
@@ -37,16 +40,19 @@ pub fn execute(cmd: CommandEnum, pwd_state: &mut PwdState) -> bool {
                         error_dir[count - 1],
                         e
                     );
+                    return false;
                 }
             }
+            return true;
         }
 
         CommandEnum::Cd(path) => {
-            command_cd(path, pwd_state);
+            return command_cd(path, pwd_state);
         }
 
         CommandEnum::Echo(args) => {
             echo(args);
+            return true;
         }
 
         CommandEnum::Exit => {
@@ -55,7 +61,8 @@ pub fn execute(cmd: CommandEnum, pwd_state: &mut PwdState) -> bool {
 
         CommandEnum::Unknown(cmd) => {
             eprintln!("command not found: {}", cmd.replace("\n", "\\n"));
+            return false;
         }
-    }
-    true
+    };
+    succes
 }

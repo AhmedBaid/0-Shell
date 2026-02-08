@@ -1,10 +1,10 @@
 use std::fs;
 use std::path::Path;
 
-pub fn mv(args: Vec<String>) {
+pub fn mv(args: Vec<String>) -> bool {
     if args.len() < 2 {
         println!("mv: missing operand");
-        return;
+        return false;
     }
 
     if args.len() == 2 {
@@ -26,13 +26,13 @@ pub fn mv(args: Vec<String>) {
             Ok(_) => (),
             Err(e) => println!("mv: cannot move '{}': {}", src, e),
         }
-        return;
+        return true;
     } else if args.len() > 2 {
         let dst_dir = Path::new(args.last().unwrap());
 
         if !dst_dir.is_dir() {
             println!("mv: target '{}' is not a directory", dst_dir.display());
-            return;
+            return false;
         }
 
         for src in &args[0..args.len() - 1] {
@@ -46,6 +46,7 @@ pub fn mv(args: Vec<String>) {
                 }
             }
         }
-        return;
+        return true;
     }
+    false
 }

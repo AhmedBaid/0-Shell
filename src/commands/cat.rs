@@ -8,13 +8,13 @@ use std::{
     path::Path,
 };
 
-pub fn cat(args: Vec<String>) {
+pub fn cat(args: Vec<String>) -> bool {
     if args.is_empty() {
         match enable_raw_mode() {
             Ok(_) => (),
             Err(e) => {
                 eprintln!("Failed to enable raw mode: {}", e);
-                return;
+                return false;
             }
         }
 
@@ -61,6 +61,7 @@ pub fn cat(args: Vec<String>) {
                 }
             }
         }
+        
     } else {
         for file in args {
             let source_path = Path::new(&file);
@@ -78,13 +79,17 @@ pub fn cat(args: Vec<String>) {
                             }
                             Err(e) => {
                                 eprintln!("cat: {}: {}", file, e);
-                                break;
+                                return false;
                             }
                         }
                     }
                 }
-                Err(e) => println!("{}", e),
+                Err(e) => {
+                    eprintln!("cat: {}: {}", file, e);
+                    return false;
+                }
             }
         }
     }
+    true
 }

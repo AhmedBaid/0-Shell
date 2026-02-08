@@ -10,7 +10,7 @@ pub struct Flag {
     pub f: bool,
 }
 
-pub fn ls(args: Vec<String>) {
+pub fn ls(args: Vec<String>) -> bool {
     let mut flag = Flag {
         a: false,
         l: false,
@@ -33,7 +33,7 @@ pub fn ls(args: Vec<String>) {
             if !is_flag(&arg, &mut flag) {
                 println!("ls: unrecognized option '{arg}'");
                 println!("Try 'ls --help' for more information.");
-                return;
+                return false;
             }
             continue;
         }
@@ -55,7 +55,11 @@ pub fn ls(args: Vec<String>) {
         dirs.push(".".to_string());
     }
 
-    l(files, dirs, errors, flag);
+    l(files, dirs, errors.clone(), flag);
+    if !errors.is_empty() {
+        return false;
+    }
+    true
 }
 
 fn l(files: Vec<String>, dirs: Vec<String>, errors: Vec<String>, flag: Flag) {

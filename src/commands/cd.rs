@@ -1,10 +1,10 @@
 use crate::commands::pwd_state::PwdState;
 use std::{env, io::ErrorKind, path::PathBuf};
 
-pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) {
+pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) -> bool {
     if args.len() > 1 {
         eprintln!("cd: too many arguments");
-        return;
+        return false;
     }
 
     let target_dir = if args.is_empty() {
@@ -12,7 +12,7 @@ pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) {
             Ok(path) => PathBuf::from(path),
             Err(_) => {
                 eprintln!("cd: HOME environment variable not set");
-                return;
+                return false;
             }
         }
     } else if args[0] == "-" {
@@ -22,7 +22,7 @@ pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) {
             Ok(path) => PathBuf::from(path),
             Err(_) => {
                 eprintln!("cd: HOME environment variable not set");
-                return;
+                return false;
             }
         }
     } else {
@@ -33,7 +33,7 @@ pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) {
         Ok(p) => p,
         Err(e) => {
             eprintln!("cd: failed to get current directory: {}", e);
-            return;
+            return false;
         }
     };
 
@@ -49,16 +49,25 @@ pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) {
                     println!("{}", pwd_state.get_current_dir());
                 }
             }
+            return true;
         }
         Err(e) => match e.kind() {
             ErrorKind::NotFound => {
-                eprintln!("cd:  No such file or directory : {}", target_dir.display())
+                eprintln!("cd:  No such file or directory : {}", target_dir.display());
+                return false;
             }
             ErrorKind::PermissionDenied => {
-                eprintln!("cd: Permission denied : {}", target_dir.display())
+                eprintln!("cd: Permission denied : {}", target_dir.display());
+                return false;
             }
-            ErrorKind::NotADirectory => eprintln!("cd: Not a directory : {}", target_dir.display()),
-            _ => eprintln!("cd: {}: {}", target_dir.display(), e),
+            ErrorKind::NotADirectory => {
+                eprintln!("cd: Not a directory : {}", target_dir.display());
+                return false;
+            }
+            _ => {
+                eprintln!("cd: {}: {}", target_dir.display(), e);
+                return false;
+            }
         },
     }
 }
