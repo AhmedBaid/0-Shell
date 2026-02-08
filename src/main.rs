@@ -1,27 +1,21 @@
 use std::env;
 use std::io::{self, stdout, Write};
-use std::io::{self, Write};
 
 pub mod commands;
 pub mod helpers;
 
-use crate::helpers::check_quotes::quotes_balanced;
 use commands::pwd_state::*;
 use crossterm::cursor::MoveToColumn;
-use crossterm::cursor::{self, MoveToColumn};
+use crossterm::cursor::{self};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
-use crossterm::execute;
 use crossterm::execute;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
 use helpers::parser::{execute_all, parse_input, ParseResult};
 use helpers::print_banner::print_banner;
 
-use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
-    terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType},
-};
 const GREEN: &str = "\x1b[32m";
 const RESET: &str = "\x1b[0m";
+
 fn main() -> io::Result<()> {
     print_banner();
     enable_raw_mode()?;
@@ -32,30 +26,39 @@ fn main() -> io::Result<()> {
 
     let mut is_continuation = false;
 
-    let current_dir = env::current_dir().expect("Failed to get current working directory");
+    let start_dir = env::current_dir().expect("Failed to get current working directory");
     let mut pwd_state = PwdState::new(
-        current_dir.display().to_string(),
-        current_dir.display().to_string(),
+        start_dir.display().to_string(),
+        start_dir.display().to_string(),
     );
-    loop {
-        let dir_str = current_dir.display().to_string();
 
-        let prompt_len = dir_str.len() + 2;
+    loop {
+        let current_display_dir = pwd_state.get_current_dir();
+
+        let prompt_len = if is_continuation {
+            2
+        } else {
+            current_display_dir.len() + 2
+        };
 
         execute!(stdout(), MoveToColumn(0), Clear(ClearType::CurrentLine))?;
-        let prompt_text = format!("{GREEN}{}$ {RESET}", pwd_state.get_current_dir());
-        if !is_continuation {
-            print!("{}", prompt_text);
+
+        let prompt_text = if !is_continuation {
+            format!("{GREEN}{}$ {RESET}", current_display_dir)
         } else {
-            print!("> ");
-        }
+            "> ".to_string()
+        };
+
+        print!("{}", prompt_text);
         io::stdout().flush()?;
 
         loop {
             if let Event::Key(key_event) = event::read()? {
                 if key_event.kind == KeyEventKind::Press {
                     let (current_x, current_y) = cursor::position().unwrap();
-                    let cursor_idx = current_x as usize - prompt_len;
+
+                    let cursor_idx = (current_x as usize).saturating_sub(prompt_len);
+
                     match key_event.code {
                         KeyCode::Char(c) => {
                             if key_event.modifiers.contains(KeyModifiers::CONTROL) && c == 'd' {
@@ -69,6 +72,7 @@ fn main() -> io::Result<()> {
                                 input_buffer.clear();
                                 break;
                             }
+
                             if cursor_idx >= input_buffer.len() {
                                 input_buffer.push(c);
                             } else {
@@ -91,15 +95,17 @@ fn main() -> io::Result<()> {
 
                         KeyCode::Backspace => {
                             if !input_buffer.is_empty() {
-                                if cursor_idx > 0 {
+                                if cursor_idx > 0 && cursor_idx <= input_buffer.len() {
                                     input_buffer.remove(cursor_idx - 1);
 
+                                    // Redraw line
                                     execute!(
                                         stdout(),
                                         cursor::MoveToColumn(prompt_len as u16),
                                         Clear(ClearType::UntilNewLine)
                                     )?;
                                     print!("{}", input_buffer);
+
                                     execute!(
                                         stdout(),
                                         cursor::MoveTo(
@@ -107,11 +113,7 @@ fn main() -> io::Result<()> {
                                             current_y
                                         )
                                     )?;
-                                    if !input_buffer.ends_with('\n') {
-                                        input_buffer.pop();
-                                        print!("\x08 \x08");
-                                        io::stdout().flush()?;
-                                    }
+                                    io::stdout().flush()?;
                                 }
                             }
                         }

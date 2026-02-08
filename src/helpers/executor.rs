@@ -1,5 +1,5 @@
 use crate::commands::{
-    cat::cat, cd::command_cd, cp::*, echo::*, ls::ls, pwd_state::PwdState, rm::rm,
+    cat::cat, cd::command_cd, cp::*, echo::*, ls::ls, mv::mv, pwd_state::PwdState, rm::rm
 };
 
 use super::parser::*;
@@ -24,8 +24,6 @@ pub fn execute(cmd: CommandEnum, pwd_state: &mut PwdState) -> bool {
             }
         }
         CommandEnum::Pwd => {
-            println!("hnaya drtha b pwd: {:?}", pwd_state);
-
             eprintln!("{}", pwd_state.get_current_dir());
         }
 
