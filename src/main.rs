@@ -68,8 +68,14 @@ fn main() -> io::Result<()> {
                             } else if key_event.modifiers.contains(KeyModifiers::CONTROL)
                                 && c == 'c'
                             {
-                                print!("\r\n");
+                                if !input_buffer.trim().is_empty() {
+                                    if history.last() != Some(&input_buffer) {
+                                        history.push(input_buffer.clone());
+                                    }
+                                }
+                                history_index = history.len();
                                 input_buffer.clear();
+                                print!("\r\n");
                                 is_continuation = false;
                                 break;
                             }
@@ -141,6 +147,7 @@ fn main() -> io::Result<()> {
                                     enable_raw_mode()?;
 
                                     if !keep_running {
+                                        is_continuation = false;
                                         break;
                                     }
 
@@ -149,12 +156,6 @@ fn main() -> io::Result<()> {
                                     break;
                                 }
                                 ParseResult::Incomplete => {
-                                    if !input_buffer.trim().is_empty() {
-                                        if history.last() != Some(&input_buffer) {
-                                            history.push(input_buffer.clone());
-                                        }
-                                    }
-                                    history_index = history.len();
                                     input_buffer.push('\n');
                                     is_continuation = true;
                                     break;
@@ -169,16 +170,20 @@ fn main() -> io::Result<()> {
                         }
 
                         KeyCode::Up => {
+                            // println!(
+                            //     "History index: {}, History length: {:?}",
+                            //     history_index, history
+                            // );
                             if history_index > 0 {
                                 history_index -= 1;
                                 input_buffer = history[history_index].clone();
-
+                                input_purline = history[history_index].clone();
                                 execute!(
                                     io::stdout(),
                                     Clear(ClearType::CurrentLine),
                                     MoveToColumn(0)
                                 )?;
-                                print!("{}{}", prompt_text, input_buffer);
+                                print!("{}{}", prompt_text, input_purline.replace("\n", "\r\n"));
                                 io::stdout().flush()?;
                             }
                         }
@@ -188,8 +193,10 @@ fn main() -> io::Result<()> {
                                 history_index += 1;
                                 if history_index < history.len() {
                                     input_buffer = history[history_index].clone();
+                                    input_purline = history[history_index].clone();
                                 } else {
                                     input_buffer.clear();
+                                    input_purline.clear();
                                 }
 
                                 execute!(
@@ -197,7 +204,7 @@ fn main() -> io::Result<()> {
                                     Clear(ClearType::CurrentLine),
                                     MoveToColumn(0)
                                 )?;
-                                print!("{}{}", prompt_text, input_buffer);
+                                print!("{}{}", prompt_text, input_purline.replace("\n", "\r\n"));
                                 io::stdout().flush()?;
                             }
                         }
