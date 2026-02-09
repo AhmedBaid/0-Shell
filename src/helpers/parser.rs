@@ -1,6 +1,5 @@
 use super::executor::*;
 use crate::commands::pwd_state::*;
-use std::process::Command;
 
 #[derive(Debug)]
 pub enum CommandEnum {
@@ -167,7 +166,7 @@ pub fn parse_input(input: &str) -> ParseResult {
                     "mkdir" => CommandEnum::Mkdir(uses_args, cmd_args),
                     "exit" => CommandEnum::Exit,
                     "clear" => {
-                        execute_clear();
+                        clear();
                         continue;
                     }
                     _ => CommandEnum::Unknown(args[0].clone()),
@@ -190,8 +189,7 @@ pub fn execute_all(cmds: Vec<CommandEnum>, pwd_state: &mut PwdState) -> bool {
     true
 }
 
-pub fn execute_clear() {
-    Command::new("clear")
-        .status()
-        .expect("Failed to execute clear command");
+
+pub fn clear() {
+    print!("\x1Bc");
 }
