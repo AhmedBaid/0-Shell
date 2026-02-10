@@ -4,12 +4,12 @@ use crossterm::{
 };
 use std::{
     fs::File,
-    io::{self, Read, Write},
+    io::{self, Write},
     path::Path,
 };
 
 pub fn cat(args: Vec<String>) -> bool {
-            let mut  ctr  = 0 ;
+    let mut ctr = 0;
 
     let stdout = io::stdout();
     if args.is_empty() {
