@@ -1,5 +1,5 @@
 use crate::commands::pwd_state::PwdState;
-use std::{env, io::ErrorKind, path::PathBuf};
+use std::{env, io::ErrorKind, path::{PathBuf}};
 
 pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) -> bool {
     if args.len() > 1 {
@@ -29,25 +29,18 @@ pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) -> bool {
         PathBuf::from(&args[0])
     };
 
-    let current_before_move = match env::current_dir() {
-        Ok(p) => p,
-        Err(e) => {
-            eprintln!("cd: failed to get current directory: {}", e);
-            return false;
-        }
-    };
+    let current_before_move = pwd_state.get_current_dir();
 
     match env::set_current_dir(&target_dir) {
         Ok(_) => {
             if let Ok(new_current) = env::current_dir() {
-                pwd_state.set_states(
-                    new_current.display().to_string(),
-                    current_before_move.display().to_string(),
-                );
+                pwd_state.set_states(new_current.display().to_string(), current_before_move);
 
                 if !args.is_empty() && args[0] == "-" {
                     println!("{}", pwd_state.get_current_dir());
                 }
+            } else {
+                pwd_state.set_states(PathBuf::from(".").display().to_string(), current_before_move);
             }
             return true;
         }

@@ -4,11 +4,14 @@ use crossterm::{
 };
 use std::{
     fs::File,
-    io::{self, Read, Write},
+    io::{self, Write},
     path::Path,
 };
 
 pub fn cat(args: Vec<String>) -> bool {
+    let mut ctr = 0;
+
+    let stdout = io::stdout();
     if args.is_empty() {
         match enable_raw_mode() {
             Ok(_) => (),
@@ -61,35 +64,27 @@ pub fn cat(args: Vec<String>) -> bool {
                 }
             }
         }
-        
     } else {
         for file in args {
             let source_path = Path::new(&file);
             let file_open = File::open(source_path);
             match file_open {
-                Ok(mut f) => {
-                    let mut buf = [0u8; 8192];
-                    loop {
-                        match f.read(&mut buf) {
-                            Ok(0) => {
-                                break;
-                            }
-                            Ok(n) => {
-                                io::stdout().write_all(&buf[..n]).ok();
-                            }
-                            Err(e) => {
-                                eprintln!("cat: {}: {}", file, e);
-                                return false;
-                            }
-                        }
+                Ok(mut f) => match io::copy(&mut f, &mut stdout.lock()) {
+                    Ok(_) => (),
+                    Err(e) => {
+                        eprintln!("cat: {}: {}", file, e);
+                        ctr += 1;
                     }
-                }
+                },
                 Err(e) => {
                     eprintln!("cat: {}: {}", file, e);
-                    return false;
+                    ctr += 1;
                 }
             }
         }
+    }
+    if ctr > 0 {
+        return false;
     }
     true
 }

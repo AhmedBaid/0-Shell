@@ -143,13 +143,8 @@ fn main() -> io::Result<()> {
                                     history_index = history.len();
 
                                     disable_raw_mode()?;
-                                    let keep_running = execute_all(cmds, &mut pwd_state);
+                                    let _ = execute_all(cmds, &mut pwd_state);
                                     enable_raw_mode()?;
-
-                                    if !keep_running {
-                                        is_continuation = false;
-                                        break;
-                                    }
 
                                     input_buffer.clear();
                                     is_continuation = false;
