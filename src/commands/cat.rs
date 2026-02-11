@@ -1,7 +1,7 @@
 use std::{ fs::File, io::{ self, Read, Write }, path::Path };
 use crossterm::{
     event::{ self, Event, KeyCode, KeyEventKind, KeyModifiers },
-    terminal::{ disable_raw_mode, enable_raw_mode },
+    terminal::{ enable_raw_mode },
 };
 
 pub fn cat(args: Vec<String>) {
@@ -22,7 +22,7 @@ pub fn cat(args: Vec<String>) {
                     match key_event.code {
                         KeyCode::Char(c) if key_event.modifiers.contains(KeyModifiers::CONTROL) => {
                             if c == 'd' {
-                               print!("\r\n");
+                                print!("\r\n");
                                 break;
                             } else if c == 'c' {
                                 print!("^C\r\n");
@@ -58,31 +58,52 @@ pub fn cat(args: Vec<String>) {
             }
         }
     } else {
+        match enable_raw_mode() {
+            Ok(_) => (),
+            Err(e) => {
+                eprintln!("Failed to enable raw mode: {}", e);
+                return;
+            }
+        }
         for file in args {
             let source_path = Path::new(&file);
-            let file_open = File::open(source_path);
-            match file_open {
+            match File::open(source_path) {
                 Ok(mut f) => {
-                    let mut buf = [0u8; 8192];
+                    let mut buffer = [0; 1024];
                     loop {
-                        match f.read(&mut buf) {
+                        if event::poll(std::time::Duration::from_millis(0)).unwrap_or(false) {
+                            if let Event::Key(key_event) = event::read().unwrap() {
+                                if
+                                    key_event.kind == KeyEventKind::Press &&
+                                    key_event.modifiers.contains(KeyModifiers::CONTROL) &&
+                                    key_event.code == KeyCode::Char('c')
+                                {
+                                    print!("^C\r\n"); // Print explicit break indicator
+                                    break; // Stop reading this file
+                                }
+                            }
+                        }
+                        match f.read(&mut buffer) {
                             Ok(0) => {
                                 break;
                             }
                             Ok(n) => {
-                                io::stdout()
-                                    .write_all(&buf[..n])
-                                    .ok();
+                                let chunk = &buffer[..n];
+                                let s = String::from_utf8_lossy(chunk);
+                                let formatted = s.replace("\n", "\r\n");
+                                print!("{}", formatted);
+                                io::stdout().flush().ok();
                             }
                             Err(e) => {
-                                eprintln!("cat: {}: {}", file, e);
+                                eprintln!("Error reading file: {}", e);
                                 break;
                             }
                         }
                     }
                 }
-                Err(e) => println!("{}", e),
+                Err(e) => println!("cat: {}: {}", file, e),
             }
         }
+        crossterm::terminal::disable_raw_mode().ok();
     }
 }
