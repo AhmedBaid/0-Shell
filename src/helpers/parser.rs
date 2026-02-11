@@ -20,7 +20,6 @@ pub enum CommandEnum {
 pub enum ParseResult {
     Ok(Vec<CommandEnum>),
     Incomplete,
-    Err(String),
 }
 
 fn parse_tokens(input: &str) -> Result<Vec<Vec<String>>, String> {

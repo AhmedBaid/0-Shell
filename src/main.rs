@@ -68,7 +68,7 @@ fn main() -> io::Result<()> {
                             } else if key_event.modifiers.contains(KeyModifiers::CONTROL)
                                 && c == 'c'
                             {
-                                if !input_buffer.trim().is_empty() {
+                                if !input_buffer.trim().is_empty() && !input_buffer.contains('\n'){
                                     if history.last() != Some(&input_buffer) {
                                         history.push(input_buffer.clone());
                                     }
@@ -135,7 +135,7 @@ fn main() -> io::Result<()> {
                             input_purline.clear();
                             match parse_input(&input_buffer) {
                                 ParseResult::Ok(cmds) => {
-                                    if !input_buffer.trim().is_empty() {
+                                    if !input_buffer.trim().is_empty() && !input_buffer.contains('\n') {
                                         if history.last() != Some(&input_buffer) {
                                             history.push(input_buffer.clone());
                                         }
@@ -153,12 +153,6 @@ fn main() -> io::Result<()> {
                                 ParseResult::Incomplete => {
                                     input_buffer.push('\n');
                                     is_continuation = true;
-                                    break;
-                                }
-                                ParseResult::Err(e) => {
-                                    println!("Error: {}\r", e);
-                                    input_buffer.clear();
-                                    is_continuation = false;
                                     break;
                                 }
                             }

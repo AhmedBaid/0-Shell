@@ -1,6 +1,6 @@
 use std::path::Path;
 
-pub fn rm(args: Vec<String>) {
+pub fn rm(args: Vec<String>) -> bool {
     let mut recursive = false;
 
     for arg in &args {
@@ -13,7 +13,7 @@ pub fn rm(args: Vec<String>) {
                 if c != '-' && c != 'r' && c != 'R' {
                     println!("rm: invalid option -- '{}'", c);
                     println!("Try 'rm --help' for more information.");
-                    return;
+                    return false;
                 }
             }
 
@@ -21,14 +21,11 @@ pub fn rm(args: Vec<String>) {
         }
     }
 
-    let targets: Vec<&String> = args
-        .iter()
-        .filter(|a| !a.starts_with('-'))
-        .collect();
+    let targets: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
 
     if targets.is_empty() {
         println!("rm: missing operand");
-        return;
+        return false;
     }
 
     for arg in targets {
@@ -57,4 +54,5 @@ pub fn rm(args: Vec<String>) {
             Err(e) => println!("rm: cannot remove '{}': {}", arg, e),
         }
     }
+    true
 }
