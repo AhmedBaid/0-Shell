@@ -12,7 +12,6 @@ pub fn rm(args: Vec<String>) -> bool {
             for c in arg[1..].chars() {
                 if c != '-' && c != 'r' && c != 'R' {
                     println!("rm: invalid option -- '{}'", c);
-                    println!("Try 'rm --help' for more information.");
                     return false;
                 }
             }
