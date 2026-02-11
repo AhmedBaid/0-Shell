@@ -159,10 +159,6 @@ fn main() -> io::Result<()> {
                         }
 
                         KeyCode::Up => {
-                            // println!(
-                            //     "History index: {}, History length: {:?}",
-                            //     history_index, history
-                            // );
                             if history_index > 0 {
                                 history_index -= 1;
                                 input_buffer = history[history_index].clone();
