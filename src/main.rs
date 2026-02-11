@@ -11,9 +11,9 @@ use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::execute;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
 use helpers::parser::{execute_all, parse_input, ParseResult};
-use helpers::print_banner::print_banner;
+use helpers::print_banner::welcome as print_banner;
 
-const GREEN: &str = "\x1b[32m";
+const PURPLE: &str = "\x1b[38;2;160;64;255m";
 const RESET: &str = "\x1b[0m";
 
 fn main() -> io::Result<()> {
@@ -44,7 +44,7 @@ fn main() -> io::Result<()> {
         execute!(stdout(), MoveToColumn(0), Clear(ClearType::CurrentLine))?;
 
         let prompt_text = if !is_continuation {
-            format!("{GREEN}{}$ {RESET}", current_display_dir)
+            format!("{PURPLE}{}$ {RESET}", current_display_dir)
         } else {
             "> ".to_string()
         };
