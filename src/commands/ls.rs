@@ -158,7 +158,28 @@ fn l(files: Vec<String>, dirs: Vec<String>, errors: Vec<String>, flag: Flag) -> 
 
 fn run_ls_l(path: &str, flag: Flag) -> String {
     let mut entries = Vec::new();
+    if flag.a {
+        // Add "." (Current Directory) -> Points to 'path' itself
+        if let Ok(metadata) = fs::metadata(path) {
+            entries.push(prepare_long_entry(
+                ".".to_string(),
+                &metadata,
+                flag,
+                Path::new(path),
+            ));
+        }
 
+        // Add ".." (Parent Directory) -> Points to 'path/..'
+        let parent_path = Path::new(path).join("..");
+        if let Ok(metadata) = fs::metadata(&parent_path) {
+            entries.push(prepare_long_entry(
+                "..".to_string(),
+                &metadata,
+                flag,
+                &parent_path,
+            ));
+        }
+    }
     if let Ok(read_dir) = fs::read_dir(path) {
         let mut dir_items: Vec<_> = read_dir.filter_map(Result::ok).collect();
         dir_items.sort_by_key(|e| e.file_name());
@@ -181,6 +202,16 @@ fn run_ls_l(path: &str, flag: Flag) -> String {
 
 fn get_dir_content(path: &str, show_hidden: bool) -> Result<Vec<String>, bool> {
     let mut filenames = Vec::new();
+    if show_hidden {
+        if let Ok(_) = fs::metadata(path) {
+            filenames.push(".".to_string());
+        }
+
+        let parent_path = Path::new(path).join("..");
+        if let Ok(_) = fs::metadata(&parent_path) {
+            filenames.push("..".to_string());
+        }
+    }
     match fs::read_dir(path) {
         Ok(entries) => {
             for entry in entries {
