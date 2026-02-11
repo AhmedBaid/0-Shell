@@ -163,6 +163,7 @@ pub fn parse_input(input: &str) -> ParseResult {
                     "echo" => CommandEnum::Echo(uses_args),
                     "rm" => CommandEnum::Rm(cmd_args),
                     "mkdir" => CommandEnum::Mkdir(uses_args, cmd_args),
+                    "mv" => CommandEnum::Mv(cmd_args),
                     "exit" => CommandEnum::Exit,
                     "clear" => {
                         clear();
