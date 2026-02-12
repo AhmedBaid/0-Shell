@@ -29,7 +29,14 @@ pub fn rm(args: Vec<String>) -> bool {
 
     for arg in targets {
         let path = Path::new(arg);
-
+        if matches!(
+            path.file_name().and_then(|n| n.to_str()),
+            Some(".") | Some("..")
+        ) {
+            eprintln!("rm: refusing to remove '.' or '..' directory: skipping '..'");
+            continue;
+        }
+        
         match std::fs::symlink_metadata(path) {
             Ok(meta) => {
                 if meta.is_symlink() {

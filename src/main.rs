@@ -13,7 +13,7 @@ use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
 use helpers::parser::{execute_all, parse_input, ParseResult};
 use helpers::print_banner::welcome as print_banner;
 
-const PURPLE: &str = "\x1b[38;2;160;64;255m";
+const NEON_BLUE: &str = "\x1b[38;2;0;180;255m";
 const RESET: &str = "\x1b[0m";
 
 fn main() -> io::Result<()> {
@@ -43,8 +43,8 @@ fn main() -> io::Result<()> {
 
         execute!(stdout(), MoveToColumn(0), Clear(ClearType::CurrentLine))?;
 
-        let prompt_text = if !is_continuation {
-            format!("{PURPLE}{}$ {RESET}", current_display_dir)
+        let prompt_text: String = if !is_continuation {
+            format!("{NEON_BLUE}{}$ {RESET}", current_display_dir)
         } else {
             "> ".to_string()
         };
