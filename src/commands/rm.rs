@@ -36,7 +36,7 @@ pub fn rm(args: Vec<String>) -> bool {
             eprintln!("rm: refusing to remove '.' or '..' directory: skipping '..'");
             continue;
         }
-        
+
         match std::fs::symlink_metadata(path) {
             Ok(meta) => {
                 if meta.is_symlink() {

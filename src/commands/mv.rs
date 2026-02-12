@@ -12,7 +12,6 @@ pub fn mv(args: Vec<String>) -> bool {
         let dst = &args[1];
         let src_path = Path::new(src);
         let dst_path = Path::new(dst);
-
         let final_dst = if dst_path.is_dir() {
             match src_path.file_name() {
                 Some(name) => dst_path.join(name),
@@ -24,7 +23,7 @@ pub fn mv(args: Vec<String>) -> bool {
 
         match fs::rename(src_path, &final_dst) {
             Ok(_) => (),
-            Err(e) => println!("mv: cannot move '{}': {}", src, e),
+            Err(e) => println!("mv: cannot moveee '{}': {}", src, e),
         }
         return true;
     } else if args.len() > 2 {
@@ -39,6 +38,7 @@ pub fn mv(args: Vec<String>) -> bool {
             let src_path = Path::new(src);
 
             if let Some(file_name) = src_path.file_name() {
+                println!("ranaming");
                 let dst = dst_dir.join(file_name);
                 match fs::rename(src_path, &dst) {
                     Ok(_) => (),
