@@ -1,3 +1,3 @@
-pub fn exit() -> bool {
+pub fn exit() -> String {
     std::process::exit(0);
 }
