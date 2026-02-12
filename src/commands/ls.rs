@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Duration, Local};
 use std::cmp::max;
 use std::os::unix::fs::{FileTypeExt, MetadataExt, PermissionsExt};
 use std::time::SystemTime;
@@ -84,7 +84,7 @@ fn l(files: Vec<String>, dirs: Vec<String>, errors: Vec<String>, flag: Flag) -> 
         for file_path in &files {
             let path = Path::new(file_path);
             if let Ok(m) = fs::symlink_metadata(path) {
-                let name = path.file_name().unwrap().to_string_lossy().to_string();
+                let name = file_path.clone();
 
                 if flag.l {
                     file_entries.push(prepare_long_entry(name, &m, flag, path));
@@ -182,8 +182,34 @@ fn run_ls_l(path: &str, flag: Flag) -> String {
     }
     if let Ok(read_dir) = fs::read_dir(path) {
         let mut dir_items: Vec<_> = read_dir.filter_map(Result::ok).collect();
-        dir_items.sort_by_key(|e| e.file_name());
+        dir_items.sort_by(|a, b| {
+            let name_a = a.file_name().to_string_lossy().to_string();
+            let name_b = b.file_name().to_string_lossy().to_string();
 
+            // Helper: Remove non-alphanumeric chars & convert to lowercase
+            // This turns "loop-control" -> "loopcontrol"
+            // This turns "loop0" -> "loop0"
+            let clean_key = |s: &str| -> String {
+                s.chars()
+                    .filter(|c| c.is_alphanumeric()) // Keep only Letters and Numbers
+                    .collect::<String>() // Rebuild the string
+                    .to_lowercase() // Make case-insensitive
+            };
+
+            let key_a = clean_key(&name_a);
+            let key_b = clean_key(&name_b);
+
+            // Compare the cleaned keys
+            let order = key_a.cmp(&key_b);
+
+            // TIE-BREAKER: If keys are identical (e.g. "file-name" vs "filename")
+            // fall back to the original string comparison so the sort is stable.
+            if order == std::cmp::Ordering::Equal {
+                name_a.cmp(&name_b)
+            } else {
+                order
+            }
+        });
         for entry in dir_items {
             let name = entry.file_name().to_string_lossy().to_string();
 
@@ -231,7 +257,28 @@ fn get_dir_content(path: &str, show_hidden: bool) -> Result<Vec<String>, bool> {
             return Err(false);
         }
     }
-    filenames.sort();
+    filenames.sort_by(|a, b| {
+        // Rule 1: Always force "." and ".." to the very top
+        let a_is_special = a == "." || a == "..";
+        let b_is_special = b == "." || b == "..";
+
+        if a_is_special && !b_is_special {
+            return std::cmp::Ordering::Less; // a comes first
+        }
+        if !a_is_special && b_is_special {
+            return std::cmp::Ordering::Greater; // b comes first
+        }
+        if a_is_special && b_is_special {
+            return a.cmp(b); // Keep "." before ".."
+        }
+
+        // Rule 2: For everything else, ignore leading dots and use lowercase
+        // Example: ".package" becomes "package", "Bin" becomes "bin"
+        let clean_a = a.trim_start_matches('.');
+        let clean_b = b.trim_start_matches('.');
+
+        clean_a.to_lowercase().cmp(&clean_b.to_lowercase())
+    });
     Ok(filenames)
 }
 
@@ -275,9 +322,9 @@ fn add_symbols(paths: Vec<String>, base: &str) -> String {
     result.join(" ")
 }
 
-fn format_permissions(metadata: &fs::Metadata) -> String {
+fn format_permissions(metadata: &fs::Metadata, file_path: &Path) -> String {
     let mode = metadata.permissions().mode();
-    let mut s = String::with_capacity(10);
+    let mut s = String::with_capacity(11);
 
     if metadata.is_dir() {
         s.push('d');
@@ -319,12 +366,22 @@ fn format_permissions(metadata: &fs::Metadata) -> String {
         s.push(if (mode & 0o001) != 0 { 'x' } else { '-' });
     }
 
+    let has_xattr = xattr::list(file_path)
+        .map(|mut i| i.next().is_some())
+        .unwrap_or(false);
+
+    if has_xattr {
+        s.push('+');
+    } else {
+        s.push(' ');
+    }
     s
 }
 
 fn format_date(modified: SystemTime) -> String {
     let now = SystemTime::now();
     let datetime: DateTime<Local> = modified.into();
+    let datetime = datetime + Duration::hours(1);
     let six_months = std::time::Duration::from_secs(180 * 24 * 60 * 60);
 
     let is_old_or_future = match now.duration_since(modified) {
@@ -406,18 +463,37 @@ fn prepare_long_entry(
     flag: Flag,
     full_path: &Path,
 ) -> LongEntry {
-    if flag.f {
+    if flag.f && !metadata.is_symlink() {
         name = append_indicator(name, metadata);
     }
 
     if metadata.file_type().is_symlink() {
-        if let Ok(target) = fs::read_link(full_path) {
+        if let Ok(target_path_buf) = fs::read_link(full_path) {
+            let mut target_str = target_path_buf.to_string_lossy().to_string();
+            if flag.f {
+                // We need the full path to the target to check its type
+                // Note: targets can be relative. strict correctness requires resolving relative paths,
+                // but for simple cases, checking the parent dir works.
+                let resolved_target = if target_path_buf.is_absolute() {
+                    target_path_buf.clone()
+                } else {
+                    full_path
+                        .parent()
+                        .unwrap_or(Path::new("."))
+                        .join(&target_path_buf)
+                };
+
+                // Get metadata of the TARGET (fs::metadata follows links)
+                if let Ok(target_meta) = fs::metadata(&resolved_target) {
+                    target_str = append_indicator(target_str, &target_meta);
+                }
+            }
             name.push_str(" -> ");
-            name.push_str(&target.to_string_lossy());
+            name.push_str(&target_str);
         }
     }
 
-    let perms = format_permissions(metadata);
+    let perms = format_permissions(metadata, full_path);
 
     let links = metadata.nlink().to_string();
 
