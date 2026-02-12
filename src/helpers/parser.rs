@@ -179,14 +179,13 @@ pub fn parse_input(input: &str) -> ParseResult {
     }
 }
 
-pub fn execute_all(cmds: Vec<CommandEnum>, pwd_state: &mut PwdState) -> bool {
+pub fn execute_all(cmds: Vec<CommandEnum>, pwd_state: &mut PwdState) {
     for cmd in cmds {
         let keep_running = execute(cmd, pwd_state);
         if !keep_running {
-            return false;
+            return
         }
     }
-    true
 }
 
 
