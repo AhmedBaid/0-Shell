@@ -44,7 +44,6 @@ pub fn ls(args: Vec<String>) -> bool {
         if arg.starts_with("-") && !is_dir_marker {
             if !is_flag(&arg, &mut flag) {
                 println!("ls: unrecognized option '{arg}'");
-                println!("Try 'ls --help' for more information.");
                 return false;
             }
             continue;
