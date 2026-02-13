@@ -1,5 +1,6 @@
 use crate::commands::{
-    cat::cat, cd::command_cd, cp::*, echo::*, ls::ls, mv::mv, pwd_state::PwdState, rm::rm,exit::exit
+    cat::cat, cd::command_cd, cp::*, echo::*, exit::exit, ls::ls, mv::mv, pwd_state::PwdState,
+    rm::rm,
 };
 
 use super::parser::*;
@@ -18,15 +19,11 @@ pub fn execute(cmd: CommandEnum, pwd_state: &mut PwdState) -> bool {
         }
         CommandEnum::Cat(c) => cat(c),
         CommandEnum::Cp(c) => {
-            if c.len() != 2 {
-                println!("cp: missing file operand");
-                return false;
-            } else {
-                return cp(c);
-            }
+            return cp(c);
         }
         CommandEnum::Pwd => {
-            eprintln!("{}", pwd_state.get_current_dir());
+            let pwd = pwd_state.get_current_dir().replace("\n", "\\n");
+            println!("{}", pwd);
             return true;
         }
 
@@ -46,8 +43,8 @@ pub fn execute(cmd: CommandEnum, pwd_state: &mut PwdState) -> bool {
             return true;
         }
 
-        CommandEnum::Cd(path) => {
-            return command_cd(path, pwd_state);
+        CommandEnum::Cd(path, error_path) => {
+            return command_cd(path, error_path, pwd_state);
         }
 
         CommandEnum::Echo(args) => {

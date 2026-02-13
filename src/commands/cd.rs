@@ -1,12 +1,18 @@
 use crate::commands::pwd_state::PwdState;
-use std::{env, io::ErrorKind, path::{PathBuf}};
+use std::{env, io::ErrorKind, path::PathBuf};
 
-pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) -> bool {
+pub fn command_cd(
+    error_path: Vec<String>,
+    mut args: Vec<String>,
+    pwd_state: &mut PwdState,
+) -> bool {
     if args.len() > 1 {
         eprintln!("cd: too many arguments");
         return false;
     }
-
+    if args.len() == 1 {
+        args[0] = args[0].replace("\\n", "\n");
+    }
     let target_dir = if args.is_empty() {
         match env::var("HOME") {
             Ok(path) => PathBuf::from(path),
@@ -40,25 +46,28 @@ pub fn command_cd(args: Vec<String>, pwd_state: &mut PwdState) -> bool {
                     println!("{}", pwd_state.get_current_dir());
                 }
             } else {
-                pwd_state.set_states(PathBuf::from(".").display().to_string(), current_before_move);
+                pwd_state.set_states(
+                    PathBuf::from(".").display().to_string(),
+                    current_before_move,
+                );
             }
             return true;
         }
         Err(e) => match e.kind() {
             ErrorKind::NotFound => {
-                eprintln!("cd:  No such file or directory : {}", target_dir.display());
+                eprintln!("cd:  No such file or directory : {}", error_path[0]);
                 return false;
             }
             ErrorKind::PermissionDenied => {
-                eprintln!("cd: Permission denied : {}", target_dir.display());
+                eprintln!("cd: Permission denied : {}", error_path[0]);
                 return false;
             }
             ErrorKind::NotADirectory => {
-                eprintln!("cd: Not a directory : {}", target_dir.display());
+                eprintln!("cd: Not a directory : {}", error_path[0]);
                 return false;
             }
             _ => {
-                eprintln!("cd: {}: {}", target_dir.display(), e);
+                eprintln!("cd: {}: {}", error_path[0], e);
                 return false;
             }
         },

@@ -38,6 +38,7 @@ pub fn mv(args: Vec<String>) -> bool {
             let src_path = Path::new(src);
 
             if let Some(file_name) = src_path.file_name() {
+                println!("ranaming");
                 let dst = dst_dir.join(file_name);
                 match fs::rename(src_path, &dst) {
                     Ok(_) => (),

@@ -7,7 +7,7 @@ pub enum CommandEnum {
     Cp(Vec<String>),
     Mv(Vec<String>),
     Pwd,
-    Cd(Vec<String>),
+    Cd(Vec<String>, Vec<String>),
     Echo(Vec<String>),
     Mkdir(Vec<String>, Vec<String>),
     Exit,
@@ -159,7 +159,7 @@ pub fn parse_input(input: &str) -> ParseResult {
                     "cat" => CommandEnum::Cat(cmd_args),
                     "cp" => CommandEnum::Cp(cmd_args),
                     "pwd" => CommandEnum::Pwd,
-                    "cd" => CommandEnum::Cd(cmd_args),
+                    "cd" => CommandEnum::Cd(cmd_args, uses_args),
                     "echo" => CommandEnum::Echo(uses_args),
                     "rm" => CommandEnum::Rm(cmd_args),
                     "mkdir" => CommandEnum::Mkdir(uses_args, cmd_args),
@@ -183,11 +183,10 @@ pub fn execute_all(cmds: Vec<CommandEnum>, pwd_state: &mut PwdState) {
     for cmd in cmds {
         let keep_running = execute(cmd, pwd_state);
         if !keep_running {
-            return
+            return;
         }
     }
 }
-
 
 pub fn clear() {
     print!("\x1Bc");

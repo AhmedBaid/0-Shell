@@ -109,6 +109,7 @@ fn l(files: Vec<String>, dirs: Vec<String>, errors: Vec<String>, flag: Flag) -> 
         }
 
         if show_headers {
+            print!("dkhl1");
             println!("{}:", path_str);
         }
 
@@ -184,7 +185,7 @@ fn run_ls_l(path: &str, flag: Flag) -> String {
             let name_b = b.file_name().to_string_lossy().to_string();
             let clean_key = |s: &str| -> String {
                 s.chars()
-                    .filter(|c| c.is_alphanumeric()) // Keep only Letters and Numbers
+                    .filter(|c| c.is_alphanumeric())
                     .collect::<String>()
                     .to_lowercase()
             };
@@ -398,30 +399,6 @@ fn append_indicator(mut name: String, metadata: &fs::Metadata) -> String {
     name
 }
 
-fn format_shell_name(name: &str) -> String {
-    if name.contains('\n') {
-        let mut res = String::from("'");
-        for c in name.chars() {
-            if c == '\n' {
-                res.push_str("'$'\\n''");
-            } else {
-                res.push(c);
-            }
-        }
-        res.push('\'');
-        if res.ends_with("''") {
-            res.truncate(res.len() - 2);
-        }
-        res
-    } else if name.contains('\'') {
-        format!("\"{}\"", name)
-    } else if name.contains('"') || name.contains(' ') {
-        format!("'{}'", name)
-    } else {
-        name.to_string()
-    }
-}
-
 fn align_and_format(entries: Vec<LongEntry>, show_total: bool) -> String {
     if entries.is_empty() {
         return String::new();
@@ -450,16 +427,6 @@ fn align_and_format(entries: Vec<LongEntry>, show_total: bool) -> String {
     }
 
     for e in entries {
-        let display_name = if let Some((link_name, target_name)) = e.name.split_once(" -> ") {
-            format!(
-                "{} -> {}",
-                format_shell_name(link_name),
-                format_shell_name(target_name)
-            )
-        } else {
-            format_shell_name(&e.name)
-        };
-
         out.push_str(&format!(
             "{} {:>lw$} {:<uw$} {:<gw$} {:>sw$} {:>dw$} {}\n",
             e.perms,
@@ -468,7 +435,7 @@ fn align_and_format(entries: Vec<LongEntry>, show_total: bool) -> String {
             e.group,
             e.size,
             e.date,
-            display_name,
+            e.name,
             lw = w_links,
             uw = w_user,
             gw = w_group,
@@ -476,6 +443,7 @@ fn align_and_format(entries: Vec<LongEntry>, show_total: bool) -> String {
             dw = w_date
         ));
     }
+
     out
 }
 
