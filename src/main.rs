@@ -90,7 +90,8 @@ fn main() -> io::Result<()> {
                                     .map(|(i, _)| i)
                                     .unwrap_or(input_purline.len());
 
-                                input_buffer.insert(byte_idx, c);
+                                let buffer_base_offset = input_buffer.len() - input_purline.len();
+                                input_buffer.insert(buffer_base_offset + byte_idx, c);
                                 input_purline.insert(byte_idx, c);
                             }
 
@@ -116,7 +117,10 @@ fn main() -> io::Result<()> {
                                     .map(|(i, _)| i);
 
                                 if let Some(idx) = byte_idx {
-                                    input_buffer.remove(idx);
+                                    let buffer_base_offset =
+                                        input_buffer.len() - input_purline.len();
+
+                                    input_buffer.remove(buffer_base_offset + idx);
                                     input_purline.remove(idx);
                                 }
 

@@ -28,6 +28,10 @@ pub fn execute(cmd: CommandEnum, pwd_state: &mut PwdState) -> bool {
         }
 
         CommandEnum::Mkdir(dir, error_dir) => {
+            if dir.is_empty() {
+                println!("mkdir: missing operand");
+                return false;
+            }
             let mut count = 0;
             for d in dir {
                 count += 1;

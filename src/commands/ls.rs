@@ -52,7 +52,7 @@ pub fn ls(args: Vec<String>) -> bool {
         let path = Path::new(&arg);
 
         if path.exists() || fs::symlink_metadata(path).is_ok() {
-            if path.is_dir() {
+            if path.is_dir() && !path.is_symlink() {
                 dirs.push(arg);
             } else {
                 files.push(arg);
@@ -109,7 +109,6 @@ fn l(files: Vec<String>, dirs: Vec<String>, errors: Vec<String>, flag: Flag) -> 
         }
 
         if show_headers {
-            print!("dkhl1");
             println!("{}:", path_str);
         }
 
@@ -495,8 +494,8 @@ fn prepare_long_entry(
 
     let size = if metadata.file_type().is_block_device() || metadata.file_type().is_char_device() {
         let rdev = metadata.rdev();
-        let major = (rdev >> 8) & 0xfff;
-        let minor = (rdev & 0xff) | ((rdev >> 12) & 0xfff00);
+        let major = libc::major(rdev);
+        let minor = libc::minor(rdev);
         format!("{:>3}, {:>3}", major, minor)
     } else {
         metadata.len().to_string()
